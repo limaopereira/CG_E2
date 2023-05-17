@@ -122,7 +122,7 @@ function addContainer(obj, x, y, z){
 function addLeftBackWheel(obj, x, y, z){
     'use strict';
 
-    new THREE.TorusGeometry(2, 1.5, 16, 100);
+    new THREE.CylinderGeometry(1, 1, 1.5);
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     obj.add(mesh);
@@ -131,7 +131,7 @@ function addLeftBackWheel(obj, x, y, z){
 function addRightBackWheel(obj, x, y, z){
     'use strict';
 
-    new THREE.TorusGeometry(2, 1.5, 16, 100);
+    new THREE.CylinderGeometry(1, 1, 1.5);
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     obj.add(mesh);
@@ -140,7 +140,7 @@ function addRightBackWheel(obj, x, y, z){
 function addLeftFrontWheel(obj, x, y, z){
     'use strict';
 
-    new THREE.TorusGeometry(2, 1.5, 16, 100);
+    new THREE.CylinderGeometry(1, 1, 1.5);
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     obj.add(mesh);
@@ -149,7 +149,7 @@ function addLeftFrontWheel(obj, x, y, z){
 function addRightFrontWheel(obj, x, y, z){
     'use strict';
 
-    new THREE.TorusGeometry(1, 0.75, 16, 100);
+    new THREE.CylinderGeometry(1, 1, 1.5);
     mesh = new THREE.Mesh(geometry, material);
     mesh.position.set(x, y, z);
     obj.add(mesh);
@@ -168,12 +168,12 @@ function createTrailer(x, y, z){
     'use strict';
 
     var trailer = new THREE.Object3D();
-    addContainer(trailer, 0, 0, 0);
     addLeftBackWheel(trailer, -3.25, -5, 8.5);
     addRightBackWheel(trailer, 3.25, -5, 8.5);
     addLeftFrontWheel(trailer, -3.25, -5, 6);
     addRightFrontWheel(trailer, 3.25, -5, 6);
-    addConnector(trailer, 0, 0, 0);
+    addContainer(trailer, 0, 0, 0);
+    // addConnector(trailer, 0, 0, 0);
 
     scene.add(trailer);
 
