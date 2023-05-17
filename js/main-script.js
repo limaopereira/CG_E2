@@ -2,7 +2,9 @@
 /* GLOBAL VARIABLES */
 //////////////////////
 
-var camera, scene, renderer;
+var  scene, renderer,camera,frontCamera, sideCamera, topCamera, ortographicCamera, perspectiveCamera;
+var geometry, material, mesh;
+var cameras = [];
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -22,18 +24,76 @@ function createScene(){
 /* CREATE CAMERA(S) */
 //////////////////////
 
-function createCamera() {
+function createCameras() {
     'use strict';
-    camera = new THREE.PerspectiveCamera(70,
+    createFrontCamera();
+    createSideCamera();
+    createTopCamera();
+    createIsometricOrtographicCamera();
+    createIsometricPerspectiveCamera();
+}
+function createFrontCamera() {
+    'use strict';
+    frontCamera= new THREE.PerspectiveCamera(70,
                                          window.innerWidth / window.innerHeight,
                                          1,
                                          1000);
-    camera.position.x = 100;
-    camera.position.y = 5;
-    camera.position.z = 0;
-    camera.lookAt(scene.position);
+    frontCamera.position.x = 50;
+    frontCamera.position.y = 5;
+    frontCamera.position.z = 0;
+    frontCamera.lookAt(scene.position);
 }
 
+function createSideCamera() {
+    'use strict';
+    sideCamera = new THREE.PerspectiveCamera(70,
+                                         window.innerWidth / window.innerHeight,
+                                         1,
+                                         1000);
+    sideCamera.position.x = 0;
+    sideCamera.position.y = 5;
+    sideCamera.position.z = 50;
+    sideCamera.lookAt(scene.position);
+}
+
+function createTopCamera() {
+    'use strict';
+    topCamera= new THREE.PerspectiveCamera(70,
+                                         window.innerWidth / window.innerHeight,
+                                         1,
+                                         1000);
+    topCamera.position.x = 0;
+    topCamera.position.y = 50;
+    topCamera.position.z = 0;
+    topCamera.lookAt(scene.position);
+}
+
+function createIsometricOrtographicCamera() {
+    'use strict';
+    //OrthographicCamera( left : Number, right : Number, top : Number, bottom : Number, near : Number, far : Number )
+    ortographicCamera = new THREE.OrthographicCamera(window.innerWidth / -2,
+                                            window.innerWidth / 2,
+                                            window.innerHeight / 2,
+                                            window.innerHeight / -2,
+                                            0.1,
+                                            1000);
+    ortographicCamera.position.x = 10;
+    ortographicCamera.position.y = 10;
+    ortographicCamera.position.z = 10;
+    ortographicCamera.lookAt(scene.position);
+}
+
+function createIsometricPerspectiveCamera() {
+    'use strict';
+    perspectiveCamera = new THREE.PerspectiveCamera(70,
+                                         window.innerWidth / window.innerHeight,
+                                         1,
+                                         1000);
+    perspectiveCamera.position.x = 50;
+    perspectiveCamera.position.y = 50;
+    perspectiveCamera.position.z = 50;
+    perspectiveCamera.lookAt(scene.position);
+}
 
 /////////////////////
 /* CREATE LIGHT(S) */
@@ -167,7 +227,8 @@ function init() {
     document.body.appendChild(renderer.domElement);
 
     createScene();
-    createCamera();
+    createCameras();
+    camera = perspectiveCamera;
 
     render();
 }
