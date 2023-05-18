@@ -34,34 +34,40 @@ function createCameras() {
 }
 function createFrontCamera() {
     'use strict';
-    frontCamera= new THREE.PerspectiveCamera(70,
-                                         window.innerWidth / window.innerHeight,
-                                         1,
-                                         1000);
+    frontCamera= new THREE.OrthographicCamera(window.innerWidth /  -40,
+                                            window.innerWidth/40 ,
+                                            window.innerHeight / 40,
+                                            window.innerHeight / -40,
+                                            0.1,
+                                            1000);
     frontCamera.position.x = 50;
-    frontCamera.position.y = 5;
+    frontCamera.position.y = 0;
     frontCamera.position.z = 0;
     frontCamera.lookAt(scene.position);
 }
 
 function createSideCamera() {
     'use strict';
-    sideCamera = new THREE.PerspectiveCamera(70,
-                                         window.innerWidth / window.innerHeight,
-                                         1,
-                                         1000);
+    sideCamera = new THREE.OrthographicCamera(window.innerWidth /  -40,
+                                            window.innerWidth/40 ,
+                                            window.innerHeight / 40,
+                                            window.innerHeight / -40,
+                                            0.1,
+                                            1000);
     sideCamera.position.x = 0;
-    sideCamera.position.y = 5;
+    sideCamera.position.y = 0;
     sideCamera.position.z = 50;
     sideCamera.lookAt(scene.position);
 }
 
 function createTopCamera() {
     'use strict';
-    topCamera= new THREE.PerspectiveCamera(70,
-                                         window.innerWidth / window.innerHeight,
-                                         1,
-                                         1000);
+    topCamera= new THREE.OrthographicCamera(window.innerWidth /  -40,
+                                            window.innerWidth/40 ,
+                                            window.innerHeight / 40,
+                                            window.innerHeight / -40,
+                                            0.1,
+                                            1000);
     topCamera.position.x = 0;
     topCamera.position.y = 50;
     topCamera.position.z = 0;
@@ -71,15 +77,15 @@ function createTopCamera() {
 function createIsometricOrtographicCamera() {
     'use strict';
     //OrthographicCamera( left : Number, right : Number, top : Number, bottom : Number, near : Number, far : Number )
-    ortographicCamera = new THREE.OrthographicCamera(window.innerWidth / -2,
-                                            window.innerWidth / 2,
-                                            window.innerHeight / 2,
-                                            window.innerHeight / -2,
+    ortographicCamera = new THREE.OrthographicCamera(window.innerWidth /  -40,
+                                            window.innerWidth/40 ,
+                                            window.innerHeight / 40,
+                                            window.innerHeight / -40,
                                             0.1,
                                             1000);
-    ortographicCamera.position.x = 10;
-    ortographicCamera.position.y = 10;
-    ortographicCamera.position.z = 10;
+    ortographicCamera.position.x = 50;
+    ortographicCamera.position.y = 50;
+    ortographicCamera.position.z = 50;
     ortographicCamera.lookAt(scene.position);
 }
 
@@ -228,7 +234,7 @@ function init() {
 
     createScene();
     createCameras();
-    camera = perspectiveCamera;
+    camera = frontCamera;
 
     render();
 }
