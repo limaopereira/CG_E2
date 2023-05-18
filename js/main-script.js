@@ -3,8 +3,9 @@
 //////////////////////
 
 var  scene, renderer,camera,frontCamera, sideCamera, topCamera, ortographicCamera, perspectiveCamera;
-var geometry, material, mesh;
+var geometry, material, material_container, material_wheel, mesh;
 var cameras = [];
+var trailer;
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -16,7 +17,7 @@ function createScene(){
 
     scene.add(new THREE.AxisHelper(10));
 
-    createTrailer(0, 0, 0);
+    createTrailer(30, 0, 30);
 
 }
 
@@ -40,9 +41,9 @@ function createFrontCamera() {
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    frontCamera.position.x = 50;
+    frontCamera.position.x = 0;
     frontCamera.position.y = 0;
-    frontCamera.position.z = 0;
+    frontCamera.position.z = 50;
     frontCamera.lookAt(scene.position);
 }
 
@@ -54,9 +55,9 @@ function createSideCamera() {
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    sideCamera.position.x = 0;
+    sideCamera.position.x = 50;
     sideCamera.position.y = 0;
-    sideCamera.position.z = 50;
+    sideCamera.position.z = 0;
     sideCamera.lookAt(scene.position);
 }
 
@@ -118,74 +119,51 @@ function createIsometricPerspectiveCamera() {
 
 function addContainer(obj, x, y, z){
     'use strict';
-
+    material_container = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
     geometry = new THREE.CubeGeometry(8, 8, 19);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
+    var mesh1 = new THREE.Mesh(geometry, material_container);
+    mesh1.position.set(x, y, z);
+    obj.add(mesh1);
 }
 
-function addLeftBackWheel(obj, x, y, z){
+
+function addWheel(obj, x, y, z){
     'use strict';
+    material_wheel = new THREE.MeshBasicMaterial({ color: 0xff00f0, wireframe: true });
 
-    new THREE.CylinderGeometry(1, 1, 1.5);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
-}
-
-function addRightBackWheel(obj, x, y, z){
-    'use strict';
-
-    new THREE.CylinderGeometry(1, 1, 1.5);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
-}
-
-function addLeftFrontWheel(obj, x, y, z){
-    'use strict';
-
-    new THREE.CylinderGeometry(1, 1, 1.5);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
-}
-
-function addRightFrontWheel(obj, x, y, z){
-    'use strict';
-
-    new THREE.CylinderGeometry(1, 1, 1.5);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
+    var geometry_wheel = new THREE.CylinderGeometry(1, 1, 1.5);
+    var mesh1 = new THREE.Mesh(geometry_wheel, material_wheel);
+    mesh1.position.set(x, y, z);
+    obj.add(mesh1);
 }
 
 function addConnector(obj, x, y, z){
     'use strict';
 
     geometry = new THREE.CubeGeometry(1, 1, 1);
-    mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(x, y, z);
-    obj.add(mesh);
+    var mesh1 = new THREE.Mesh(geometry, material);
+    mesh1.position.set(x, y, z);
+    obj.add(mesh1);
 }
 
 function createTrailer(x, y, z){
     'use strict';
 
-    var trailer = new THREE.Object3D();
-    addLeftBackWheel(trailer, -3.25, -5, 8.5);
-    addRightBackWheel(trailer, 3.25, -5, 8.5);
-    addLeftFrontWheel(trailer, -3.25, -5, 6);
-    addRightFrontWheel(trailer, 3.25, -5, 6);
+    trailer = new THREE.Object3D();
+    addWheel(trailer, -3.25, -5, 8.5);
+    addWheel(trailer, 3.25, -5, 8.5);
+    addWheel(trailer, -3.25, -5, 6);
+    addWheel(trailer, 3.25, -5, 6);
     addContainer(trailer, 0, 0, 0);
     // addConnector(trailer, 0, 0, 0);
 
-    scene.add(trailer);
-
+    
     trailer.position.x = x;
     trailer.position.y = y;
     trailer.position.z = z;
+
+    scene.add(trailer);
+
 }
 
 
