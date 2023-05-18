@@ -134,6 +134,7 @@ function addWheel(obj, x, y, z){
     var geometry_wheel = new THREE.CylinderGeometry(1, 1, 1.5);
     var mesh1 = new THREE.Mesh(geometry_wheel, material_wheel);
     mesh1.position.set(x, y, z);
+    mesh1.rotation.z = Math.PI / 2;
     obj.add(mesh1);
 }
 
