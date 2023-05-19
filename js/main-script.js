@@ -6,6 +6,7 @@ var  scene, renderer,camera,frontCamera, sideCamera, topCamera, ortographicCamer
 var geometry, material, material_container, material_wheel, mesh;
 var cameras = [];
 var trailer;
+var keyCodes = [];
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -17,7 +18,7 @@ function createScene(){
 
     scene.add(new THREE.AxisHelper(10));
 
-    createTrailer(30, 0, 30);
+    createTrailer(30, 0, 10);
 
 }
 
@@ -192,6 +193,7 @@ function update(){
 
 }
 
+
 /////////////
 /* DISPLAY */
 /////////////
@@ -210,12 +212,19 @@ function init() {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
+    keyCodes[37]=false;
+    keyCodes[38]=false;
+    keyCodes[39]=false;
+    keyCodes[40]=false;
 
     createScene();
     createCameras();
-    camera = frontCamera;
+    camera = perspectiveCamera;
 
     render();
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("resize", onResize);
 }
 
 /////////////////////
@@ -223,7 +232,22 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
+    if(keyCodes[37]){
+        trailer.position.x -= 1;
+        keyCodes[37]=false;
+    }else if(keyCodes[38]){
+        trailer.position.z -= 1;
+        keyCodes[38]=false;
+    }else if(keyCodes[39]){
+        trailer.position.x += 1;
+        keyCodes[39]=false;
+    }else if(keyCodes[40]){
+        trailer.position.z += 1;
+        keyCodes[40]=false;
+    }
+    render();
 
+    requestAnimationFrame(animate);
 }
 
 ////////////////////////////
@@ -245,13 +269,29 @@ function onResize() {
 ///////////////////////
 function onKeyDown(e) {
     'use strict';
-
+    switch (e.keyCode) {
+        case 37: //arrow left
+            keyCodes[37]=true;
+            break;
+        case 38: //arrow up
+            keyCodes[38]=true;
+            break;
+        case 39: //arrow right
+            keyCodes[39]=true;
+            break;  
+        case 40: //arrow down
+            keyCodes[40]=true;
+            break; 
+        } 
 }
+
+
 
 ///////////////////////
 /* KEY UP CALLBACK */
 ///////////////////////
 function onKeyUp(e){
     'use strict';
+
 
 }
