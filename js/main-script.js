@@ -3,7 +3,7 @@
 //////////////////////
 
 var  scene, renderer,camera,frontCamera, sideCamera, topCamera, ortographicCamera, perspectiveCamera;
-var geometry, material, material_container, material_wheel, mesh;
+var geometry, material, material_container, material_wheel, material_connector, mesh;
 var cameras = [];
 var trailer;
 var keyCodes = [];
@@ -120,7 +120,7 @@ function createIsometricPerspectiveCamera() {
 
 function addContainer(obj, x, y, z){
     'use strict';
-    material_container = new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: true });
+    material_container = new THREE.MeshBasicMaterial({ color: 0xa9a9a9, wireframe: true });
     geometry = new THREE.CubeGeometry(8, 8, 19);
     var mesh1 = new THREE.Mesh(geometry, material_container);
     mesh1.position.set(x, y, z);
@@ -130,7 +130,7 @@ function addContainer(obj, x, y, z){
 
 function addWheel(obj, x, y, z){
     'use strict';
-    material_wheel = new THREE.MeshBasicMaterial({ color: 0xff00f0, wireframe: true });
+    material_wheel = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
 
     var geometry_wheel = new THREE.CylinderGeometry(1, 1, 1.5);
     var mesh1 = new THREE.Mesh(geometry_wheel, material_wheel);
@@ -142,8 +142,9 @@ function addWheel(obj, x, y, z){
 function addConnector(obj, x, y, z){
     'use strict';
 
-    geometry = new THREE.CubeGeometry(1, 1, 1);
-    var mesh1 = new THREE.Mesh(geometry, material);
+    material_connector = new THREE.MeshBasicMaterial({ color: 0x00008b, wireframe: true });
+    var geometry_connector = new THREE.CylinderGeometry(1, 1, 1);
+    var mesh1 = new THREE.Mesh(geometry_connector, material_connector);
     mesh1.position.set(x, y, z);
     obj.add(mesh1);
 }
@@ -156,9 +157,8 @@ function createTrailer(x, y, z){
     addWheel(trailer, 3.25, -5, 8.5);
     addWheel(trailer, -3.25, -5, 6);
     addWheel(trailer, 3.25, -5, 6);
+    addConnector(trailer, 0, -4.5, -8.5);
     addContainer(trailer, 0, 0, 0);
-    // addConnector(trailer, 0, 0, 0);
-
     
     trailer.position.x = x;
     trailer.position.y = y;
@@ -219,7 +219,7 @@ function init() {
 
     createScene();
     createCameras();
-    camera = perspectiveCamera;
+    camera = sideCamera;
 
     render();
     window.addEventListener("keydown", onKeyDown);
