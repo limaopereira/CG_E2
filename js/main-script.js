@@ -7,6 +7,87 @@ var geometry, material, material_container, material_wheel, material_connector, 
 var cameras = [];
 var trailer;
 var keyCodes = [];
+var redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: true });
+var blueBasicMaterial = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
+var blackBasicMaterial = new THREE.MeshBasicMaterial({ color: 'black', wireframe: true });
+var greyBasicMaterial = new THREE.MeshBasicMaterial({ color: 'grey', wireframe: true });
+
+var freedomDegrees = {
+    v1: 0,
+    v2: 0,
+    v3: 0,
+    delta1: 0
+}
+
+var robotSizes = {
+    chest: {
+        x: 8,
+        y: 4,
+        z: 4.5,
+    },
+    head: {
+        x: 2.5,
+        y: 2.5,
+        z: 2.5
+    },
+    antenna: {
+        x:0.5,
+        y:2,
+        z:0.5,
+    },
+    
+    arm: {
+        x:2.25,
+        y:4,
+        z:3.25,
+    },
+    forearm: {
+        x:2.25,
+        y:1.5,
+        z:7.75,
+    },
+    eye: {
+        x:0.5,
+        y:0.5,
+        z:0.5,
+    },
+    abdomen: {
+        x:4,
+        y:1.5,
+        z:4.5,
+    },
+    waist: {
+        x:5,
+        y:1.5,
+        z:4.5,
+    },
+    wheel: {
+        x:1,
+        y:1,
+        z:1.5,
+    },
+    thigh: {
+        x:1,
+        y:2,
+        z:1,
+    },
+    leg: {
+        x:2,
+        y:6,
+        z:1.5,
+    },
+    foot: {
+        x:2,
+        y:1,
+        z:2,
+    },
+    pipe:{
+        x:0.25,
+        y:3,
+        z:0.25,
+    }
+
+}
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -18,7 +99,9 @@ function createScene(){
 
     scene.add(new THREE.AxisHelper(10));
 
-    createTrailer(30, 0, 10);
+
+    createTrailer(30, 0.5, 10);
+    createRobot(0,0,0);
 
 }
 
@@ -128,17 +211,6 @@ function addContainer(obj, x, y, z){
 }
 
 
-function addWheel(obj, x, y, z){
-    'use strict';
-    material_wheel = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
-
-    var geometry_wheel = new THREE.CylinderGeometry(1, 1, 1.5);
-    var mesh1 = new THREE.Mesh(geometry_wheel, material_wheel);
-    mesh1.position.set(x, y, z);
-    mesh1.rotation.z = Math.PI / 2;
-    obj.add(mesh1);
-}
-
 function addConnector(obj, x, y, z){
     'use strict';
 
@@ -153,11 +225,11 @@ function createTrailer(x, y, z){
     'use strict';
 
     trailer = new THREE.Object3D();
-    addWheel(trailer, -3.25, -5, 8.5);
-    addWheel(trailer, 3.25, -5, 8.5);
-    addWheel(trailer, -3.25, -5, 6);
-    addWheel(trailer, 3.25, -5, 6);
-    addConnector(trailer, 0, -4.5, -8.5);
+    addWheel(trailer, -3.25, -5, -8.5);
+    addWheel(trailer, 3.25, -5, -8.5);
+    addWheel(trailer, -3.25, -5, -6);
+    addWheel(trailer, 3.25, -5, -6);
+    addConnector(trailer, 0, -4.5, 8.5);
     addContainer(trailer, 0, 0, 0);
     
     trailer.position.x = x;
@@ -168,6 +240,283 @@ function createTrailer(x, y, z){
 
 }
 
+/* -------------------------------------------------- */
+/*                      ROBOT                         */
+/* -------------------------------------------------- */
+
+function createCube(size, material){
+    'use strict'
+    var {x, y, z} = size;
+    geometry = new THREE.CubeGeometry(x, y, z);
+    mesh = new THREE.Mesh(geometry, material);
+    return mesh;
+}
+
+function createCylinder(size, material){
+    'use strict'
+    var {x, y, z} = size;
+    geometry = new THREE.CylinderGeometry(x, y, z);
+    mesh = new THREE.Mesh(geometry, material);
+    return mesh;
+}
+
+function addChest(obj, x, y, z){
+    'use strict'
+    var chest = new THREE.Object3D();
+    chest.add(createCube(robotSizes.chest,redBasicMaterial))
+    chest.position.set(x,y,z);
+    obj.add(chest);
+    return chest;
+}
+
+function addArm(obj, x, y, z){
+    'use strict'
+    var arm = createCube(robotSizes.arm, redBasicMaterial);
+    arm.position.set(x,y,z);
+    obj.add(arm);
+}
+
+
+function addForearm(obj, x, y, z){
+    'use strict'
+    var forearm = createCube(robotSizes.forearm, blueBasicMaterial);
+    forearm.position.set(x,y,z);
+    obj.add(forearm);
+}
+
+function addPipe(obj, x, y, z){
+    'use strict'
+    var pipe = createCube(robotSizes.pipe, greyBasicMaterial);
+    pipe.position.set(x,y,z);
+    obj.add(pipe);
+}
+
+
+
+function addUpperLimbs(obj, x, y, z){
+    'use strict'
+    var upperLimbs = new THREE.Object3D();
+    var pipeSignalX = x > 0 ? 1 : -1; 
+    upperLimbs.position.set(x - pipeSignalX*freedomDegrees.delta1,y,z);
+    addArm(upperLimbs,0,0,0);
+    addForearm(
+        upperLimbs,
+        0,
+        -(robotSizes.arm.y+robotSizes.forearm.y)/2, 
+        (robotSizes.forearm.z-robotSizes.arm.z)/2
+    );
+    addPipe(
+        upperLimbs,
+        pipeSignalX*(robotSizes.arm.x+robotSizes.pipe.x)/2,
+        robotSizes.arm.y/2,
+        (robotSizes.pipe.z-robotSizes.arm.z)/2
+    );
+    
+    obj.add(upperLimbs);
+}
+
+function addAntenna(obj, x, y, z){
+    'use strict'
+    var antenna = createCube(robotSizes.antenna, blackBasicMaterial);
+    antenna.position.set(x,y,z);
+    obj.add(antenna);
+}
+
+function addEye(obj, x, y, z){
+    'use strict'
+    var eye = createCylinder(robotSizes.eye, blackBasicMaterial);
+    eye.rotation.x += 90 * Math.PI/180;
+    eye.position.set(x,y,z);
+    
+    obj.add(eye);
+}
+
+function addHead(obj, x, y, z){
+    'use strict'
+    var head = new THREE.Object3D();
+    var headCube = createCube(robotSizes.head, blueBasicMaterial);
+    headCube.position.set(
+        0,
+        robotSizes.head.y/2,
+        robotSizes.head.z/2,
+    );    
+    head.add(headCube);
+    addAntenna(
+        headCube,
+        -(robotSizes.head.x+robotSizes.antenna.x)/2,
+        robotSizes.antenna.y/2,
+        (robotSizes.antenna.z-robotSizes.head.z)/2
+    );
+    addAntenna(
+        headCube,
+        (robotSizes.head.x+robotSizes.antenna.x)/2,
+        robotSizes.antenna.y/2,
+        (robotSizes.antenna.z-robotSizes.head.z)/2
+    );
+    addEye(
+        headCube,
+        -robotSizes.head.x/4,
+        robotSizes.head.y/4,
+        robotSizes.head.z/2
+    );
+    addEye(
+        headCube,
+        robotSizes.head.x/4,
+        robotSizes.head.y/4,
+        robotSizes.head.z/2
+    );
+    
+    head.rotation.x += freedomDegrees.v3 * Math. PI/180  ;
+    head.position.add(new THREE.Vector3(x,y,z));
+    obj.add(head);
+}
+
+function addAbdomen(obj, x, y, z){
+    'use strict'
+    var abdomen = createCube(robotSizes.abdomen, redBasicMaterial);
+    abdomen.position.set(x,y,z);
+    obj.add(abdomen);
+    return abdomen;
+}
+
+function addWaist(obj, x, y, z){
+    'use strict'
+
+    var waist = createCube(robotSizes.waist, greyBasicMaterial);
+    waist.position.set(x,y,z);
+    obj.add(waist);
+    addWheel(
+        waist,
+        -(robotSizes.waist.x+robotSizes.wheel.z)/2,
+        (robotSizes.wheel.x-robotSizes.waist.y)/2,
+        (robotSizes.wheel.y*2-robotSizes.waist.z)/2
+    );
+    addWheel(
+        waist,
+        (robotSizes.waist.x+robotSizes.wheel.z)/2,
+        (robotSizes.wheel.x-robotSizes.waist.y)/2,
+        (robotSizes.wheel.y*2-robotSizes.waist.z)/2
+    );
+    return waist;
+}
+
+function addWheel(obj, x, y, z){
+    'use strict'
+    var wheel = createCylinder(robotSizes.wheel, blackBasicMaterial);
+    wheel.rotation.z += 90 * Math.PI/180;
+    wheel.position.set(x,y,z);
+    obj.add(wheel);
+}
+
+function addThigh(obj, x, y, z){
+    var thigh = createCube(robotSizes.thigh, greyBasicMaterial);
+    thigh.position.set(x,y,z)
+    obj.add(thigh);
+    return thigh;
+}
+
+function addLeg(obj, x, y, z){
+    var leg = createCube(robotSizes.leg, blueBasicMaterial);
+    leg.position.set(x,y,z);
+    obj.add(leg);
+    return leg;
+}
+
+function addFoot(obj, x, y, z){
+    var foot = new THREE.Object3D();
+    var footCube = createCube(robotSizes.foot, blueBasicMaterial);
+    footCube.position.set(0,robotSizes.foot.y/2,robotSizes.foot.z/2);
+    foot.add(footCube);
+    foot.rotation.x += freedomDegrees.v1 * Math.PI/180;
+    foot.position.add(new THREE.Vector3(x,y,z));
+    obj.add(foot);
+    return foot;
+}
+
+
+function addLowerLimbs(obj, x, y, z){
+    'use strict'
+
+    var lowerLimbs = new THREE.Object3D();
+    var wheelSignalX = x > 0 ? 1 : -1;
+    var thigh = addThigh(
+        lowerLimbs,
+        0,
+        -robotSizes.waist.y/2-robotSizes.thigh.y/2,
+        (robotSizes.thigh.z-robotSizes.waist.y)/2
+    );
+    var leg = addLeg(
+        thigh,
+        0,
+        -(robotSizes.thigh.y+robotSizes.leg.y)/2,
+        (robotSizes.leg.z-robotSizes.thigh.z)/2
+    );
+    addFoot(
+        leg,
+        0,
+        -robotSizes.leg.y/2,
+        robotSizes.leg.z/2
+    );
+    addWheel(
+        leg,
+        wheelSignalX*(robotSizes.wheel.z+robotSizes.leg.x)/2,
+        (2*robotSizes.wheel.x-robotSizes.leg.y)/2,
+        (2*robotSizes.wheel.y-robotSizes.leg.z)/2
+    );
+    addWheel(
+        leg,
+        wheelSignalX*(robotSizes.wheel.z+robotSizes.leg.x)/2,
+        (2*robotSizes.wheel.x-robotSizes.leg.y)/2 + 3,
+        (2*robotSizes.wheel.y-robotSizes.leg.z)/2
+    );
+
+    lowerLimbs.rotation.x += freedomDegrees.v2 * Math.PI/180;
+    lowerLimbs.position.add(new THREE.Vector3(x,y,z));
+    obj.add(lowerLimbs);
+
+    return lowerLimbs;
+}
+
+
+function createRobot(x,y,z){
+    'use strict'
+
+    var robot = new THREE.Object3D();
+    var chest = addChest(robot,x,y,z);
+    addUpperLimbs(
+        chest,
+        -(robotSizes.chest.x+robotSizes.arm.x)/2,
+         0,
+        -(robotSizes.chest.z+robotSizes.arm.z)/2
+    );
+    addUpperLimbs(
+        chest,
+        (robotSizes.chest.x+robotSizes.arm.x)/2,
+         0,
+        -(robotSizes.chest.z+robotSizes.arm.z)/2
+    );
+    addHead(
+        chest,
+        0,
+        robotSizes.chest.y/2,
+        -robotSizes.chest.z/2
+    );
+    var abdomen = addAbdomen(chest, 0, -(robotSizes.chest.y+robotSizes.abdomen.y)/2,0);
+    var waist = addWaist(abdomen, 0, -(robotSizes.abdomen.y+robotSizes.waist.y)/2,0);
+    addLowerLimbs(
+        waist,
+        (robotSizes.thigh.x-robotSizes.abdomen.x)/2,
+        0,
+        -robotSizes.waist.y
+    )
+    addLowerLimbs(
+        waist,
+        -(robotSizes.thigh.x-robotSizes.abdomen.x)/2,
+        0,
+        -robotSizes.waist.y
+    )
+    scene.add(robot);
+}
 
 //////////////////////
 /* CHECK COLLISIONS */
