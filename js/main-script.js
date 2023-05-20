@@ -278,9 +278,10 @@ class Robot extends THREE.Object3D{
     rotateFeet(degrees){
         if(0<= freedomDegrees.v1 + degrees && freedomDegrees.v1 + degrees <= 180){
             freedomDegrees.v1 += degrees;
+            this.leftFootGroup.rotate(degrees);
+            this.rightFootGroup.rotate(degrees);
         }
-        this.leftFootGroup.rotate(degrees);
-        this.rigthFootGroup.rotate(degrees);
+        
     }
 
     rotateLowerLimbs(degrees){
@@ -300,10 +301,10 @@ class Robot extends THREE.Object3D{
     }
 
     moveUpperLimbs(units){
-        if(0<= freedomDegrees.delta1 + units <= robotSizes.arm.x){
+        if(0 <= freedomDegrees.delta1 + units &&  freedomDegrees.delta1 + units <= robotSizes.arm.x){
             freedomDegrees.delta1 += units;
             this.leftUpperLimbsGroup.move(units,0,0);
-            this.rightUpperLimbsGroup.move(units,0,0);
+            this.rightUpperLimbsGroup.move(-units,0,0);
         }
     }
 }
