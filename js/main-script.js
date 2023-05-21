@@ -7,10 +7,11 @@ var geometry, material, material_container, material_wheel, material_connector, 
 var cameras = [];
 var trailer, robot;
 var keyCodes = [];
-var redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: true });
+var redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: true});
 var blueBasicMaterial = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
 var blackBasicMaterial = new THREE.MeshBasicMaterial({ color: 'black', wireframe: true });
 var greyBasicMaterial = new THREE.MeshBasicMaterial({ color: 'grey', wireframe: true });
+
 
 var robotSizes = {
     chest: {
@@ -689,10 +690,10 @@ function animate() {
         robot.rotateLowerLimbs(-1);
         keyCodes[83]=false;
     }else if(keyCodes[69]){
-        robot.moveUpperLimbs(0.1);
+        robot.moveUpperLimbs(0.2);
         keyCodes[69]=false;
     }else if(keyCodes[68]){
-        robot.moveUpperLimbs(-0.1);
+        robot.moveUpperLimbs(-0.2);
         keyCodes[68]=false;
     }else if(keyCodes[82]){
         robot.rotateHead(1);
@@ -700,7 +701,14 @@ function animate() {
     }else if(keyCodes[70]){
         robot.rotateHead(-1);
         keyCodes[70]=false;
+    }else if(keyCodes[54]){
+        redBasicMaterial.wireframe=!redBasicMaterial.wireframe;
+        blueBasicMaterial.wireframe=!blueBasicMaterial.wireframe;
+        blackBasicMaterial.wireframe=!blackBasicMaterial.wireframe;
+        greyBasicMaterial.wireframe=!greyBasicMaterial.wireframe;
+        keyCodes[54]=false;
     }
+
     render();
 
     requestAnimationFrame(animate);
@@ -769,6 +777,9 @@ function onKeyDown(e) {
         case 70: //F
         case 102: //f
             keyCodes[70]=true;
+            break;
+        case 54: //6
+            keyCodes[54]=true;
             break;
         } 
 }
