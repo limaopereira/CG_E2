@@ -640,10 +640,18 @@ function init() {
     keyCodes[38]=false;
     keyCodes[39]=false;
     keyCodes[40]=false;
+    keyCodes[81]=false;
+    keyCodes[87]=false;
+    keyCodes[69]=false;
+    keyCodes[82]=false;
+    keyCodes[65]=false;
+    keyCodes[83]=false;
+    keyCodes[68]=false;
+    keyCodes[70]=false;
 
     createScene();
     createCameras();
-    camera = perspectiveCamera;
+    camera = frontCamera;
 
     render();
     window.addEventListener("keydown", onKeyDown);
@@ -668,6 +676,30 @@ function animate() {
     }else if(keyCodes[40]){
         trailer.position.z += 1;
         keyCodes[40]=false;
+    }else if(keyCodes[81]){
+        robot.rotateFeet(1);
+        keyCodes[81]=false;
+    }else if(keyCodes[65]){
+        robot.rotateFeet(-1);
+        keyCodes[65]=false;
+    }else if(keyCodes[87]){
+        robot.rotateLowerLimbs(1);
+        keyCodes[87]=false;
+    }else if(keyCodes[83]){
+        robot.rotateLowerLimbs(-1);
+        keyCodes[83]=false;
+    }else if(keyCodes[69]){
+        robot.moveUpperLimbs(0.1);
+        keyCodes[69]=false;
+    }else if(keyCodes[68]){
+        robot.moveUpperLimbs(-0.1);
+        keyCodes[68]=false;
+    }else if(keyCodes[82]){
+        robot.rotateHead(1);
+        keyCodes[82]=false;
+    }else if(keyCodes[70]){
+        robot.rotateHead(-1);
+        keyCodes[70]=false;
     }
     render();
 
@@ -706,10 +738,40 @@ function onKeyDown(e) {
         case 40: //arrow down
             keyCodes[40]=true;
             break; 
+        case 81: //Q
+        case 113: //q
+            keyCodes[81]=true;
+            break;
+        case 65: //A
+        case 97: //a
+            keyCodes[65]=true;
+            break;
+        case 87: //W
+        case 119: //w
+            keyCodes[87]=true;
+            break;
+        case 83: //S
+        case 115: //s
+            keyCodes[83]=true;
+            break;
+        case 69: //E
+        case 101: //e
+            keyCodes[69]=true;
+            break;
+        case 68: //D
+        case 100: //d
+            keyCodes[68]=true;
+            break;
+        case 82: //R
+        case 114: //r
+            keyCodes[82]=true;
+            break;
+        case 70: //F
+        case 102: //f
+            keyCodes[70]=true;
+            break;
         } 
 }
-
-
 
 ///////////////////////
 /* KEY UP CALLBACK */
