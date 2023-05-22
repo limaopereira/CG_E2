@@ -4,6 +4,9 @@
 
 var  scene, renderer,camera,frontCamera, sideCamera, topCamera, ortographicCamera, perspectiveCamera;
 var geometry, material, material_container, material_wheel, material_connector, mesh;
+var cameras = {};
+var activeCamera;
+var trailer, robot;
 var cameras = [];
 var trailer, robot, bounding_box_trailer, boundingbox_robot;
 var keyCodes = [];
@@ -11,7 +14,6 @@ var redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: tr
 var blueBasicMaterial = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
 var blackBasicMaterial = new THREE.MeshBasicMaterial({ color: 'black', wireframe: true });
 var greyBasicMaterial = new THREE.MeshBasicMaterial({ color: 'grey', wireframe: true });
-
 
 
 var robotSizes = {
@@ -155,71 +157,72 @@ function createCameras() {
 }
 function createFrontCamera() {
     'use strict';
-    frontCamera= new THREE.OrthographicCamera(window.innerWidth /  -40,
+    cameras.front = new THREE.OrthographicCamera(window.innerWidth /  -40,
                                             window.innerWidth/40 ,
                                             window.innerHeight / 40,
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    frontCamera.position.x = 0;
-    frontCamera.position.y = 0;
-    frontCamera.position.z = 50;
-    frontCamera.lookAt(scene.position);
+    cameras.front.position.x = 0;
+    cameras.front.position.y = 0;
+    cameras.front.position.z = 50;
+    cameras.front.lookAt(scene.position);
+    activeCamera = cameras.front;
 }
 
 function createSideCamera() {
     'use strict';
-    sideCamera = new THREE.OrthographicCamera(window.innerWidth /  -40,
+    cameras.side = new THREE.OrthographicCamera(window.innerWidth /  -40,
                                             window.innerWidth/40 ,
                                             window.innerHeight / 40,
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    sideCamera.position.x = 50;
-    sideCamera.position.y = 0;
-    sideCamera.position.z = 0;
-    sideCamera.lookAt(scene.position);
+    cameras.side.position.x = 50;
+    cameras.side.position.y = 0;
+    cameras.side.position.z = 0;
+    cameras.side.lookAt(scene.position);
 }
 
 function createTopCamera() {
     'use strict';
-    topCamera= new THREE.OrthographicCamera(window.innerWidth /  -40,
+    cameras.top = new THREE.OrthographicCamera(window.innerWidth /  -40,
                                             window.innerWidth/40 ,
                                             window.innerHeight / 40,
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    topCamera.position.x = 0;
-    topCamera.position.y = 50;
-    topCamera.position.z = 0;
-    topCamera.lookAt(scene.position);
+    cameras.top.position.x = 0;
+    cameras.top.position.y = 50;
+    cameras.top.position.z = 0;
+    cameras.top.lookAt(scene.position);
 }
 
 function createIsometricOrtographicCamera() {
     'use strict';
     //OrthographicCamera( left : Number, right : Number, top : Number, bottom : Number, near : Number, far : Number )
-    ortographicCamera = new THREE.OrthographicCamera(window.innerWidth /  -40,
+    cameras.ortographic = new THREE.OrthographicCamera(window.innerWidth /  -40,
                                             window.innerWidth/40 ,
                                             window.innerHeight / 40,
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    ortographicCamera.position.x = 50;
-    ortographicCamera.position.y = 50;
-    ortographicCamera.position.z = 50;
-    ortographicCamera.lookAt(scene.position);
+    cameras.ortographic.position.x = 50;
+    cameras.ortographic.position.y = 50;
+    cameras.ortographic.position.z = 50;
+    cameras.ortographic.lookAt(scene.position);
 }
 
 function createIsometricPerspectiveCamera() {
     'use strict';
-    perspectiveCamera = new THREE.PerspectiveCamera(70,
+    cameras.perspective = new THREE.PerspectiveCamera(70,
                                          window.innerWidth / window.innerHeight,
                                          1,
                                          1000);
-    perspectiveCamera.position.x = 50;
-    perspectiveCamera.position.y = 50;
-    perspectiveCamera.position.z = 50;
-    perspectiveCamera.lookAt(scene.position);
+    cameras.perspective.position.x = 50;
+    cameras.perspective.position.y = 50;
+    cameras.perspective.position.z = 50;
+    cameras.perspective.lookAt(scene.position);
 }
 
 /////////////////////
@@ -757,7 +760,7 @@ function update(){
 /////////////
 function render() {
     'use strict';
-    renderer.render(scene, camera);
+    renderer.render(scene, activeCamera);
 }
 
 ////////////////////////////////
@@ -785,9 +788,7 @@ function init() {
 
     createScene();
     createCameras();
-    camera = sideCamera;
 
-    render();
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("resize", onResize);
@@ -840,6 +841,32 @@ function animate() {
         blackBasicMaterial.wireframe=!blackBasicMaterial.wireframe;
         greyBasicMaterial.wireframe=!greyBasicMaterial.wireframe;
         keyCodes[54]=false;
+    }
+    else if(keyCodes[49]){
+        activeCamera = cameras.front
+        keyCodes[49] = false;
+
+    }
+    else if(keyCodes[50]){
+        activeCamera = cameras.side
+        console.log(activeCamera)
+        keyCodes[50] = false;
+    }
+    else if(keyCodes[51]){
+        activeCamera = cameras.top
+        keyCodes[51] = false;
+
+    }
+    else if(keyCodes[52]){
+        activeCamera = cameras.ortographic
+        keyCodes[52] = false;
+
+    }
+    else if(keyCodes[53]){
+        activeCamera = cameras.perspective
+        console.log(activeCamera);
+        keyCodes[53] = false;
+
     }
 
     render();
@@ -914,7 +941,23 @@ function onKeyDown(e) {
         case 54: //6
             keyCodes[54]=true;
             break;
-        } 
+        case 49:
+            keyCodes[49]=true;
+            break;
+        case 50:
+            keyCodes[50]=true;
+            break;
+        case 51:
+            keyCodes[51]=true;
+            break;
+        case 52:
+            keyCodes[52]=true;
+            break;
+        case 53:
+            keyCodes[53]=true;
+            break;
+    }
+    
 }
 
 ///////////////////////
