@@ -261,13 +261,7 @@ function createTrailer(obj ,x, y, z){
     addWheel(obj, 3.25, -5, -6);
     addConnector(obj, 0, -4.5, 8.5);
     addContainer(obj, 0, 0, 0);
-    
-    // trailer.position.x = x;
-    // trailer.position.y = y;
-    // trailer.position.z = z;
-
-    // scene.add(trailer);
-
+    obj.position.set(x,y,z);
 }
 
 /* -------------------------------------------------- */
@@ -689,74 +683,71 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
-    if(keyCodes[37]){
-        trailer.moveX(-1);
-        keyCodes[37]=false;
-    }else if(keyCodes[38]){
-        trailer.moveZ(-1);
-        keyCodes[38]=false;
-    }else if(keyCodes[39]){
-        trailer.moveX(1);
-        keyCodes[39]=false;
-    }else if(keyCodes[40]){
-        trailer.moveZ(1);
-        keyCodes[40]=false;
-    }else if(keyCodes[81]){
-        robot.rotateFeet(1);
-        keyCodes[81]=false;
-    }else if(keyCodes[65]){
-        robot.rotateFeet(-1);
-        keyCodes[65]=false;
-    }else if(keyCodes[87]){
-        robot.rotateLowerLimbs(1);
-        keyCodes[87]=false;
-    }else if(keyCodes[83]){
-        robot.rotateLowerLimbs(-1);
-        keyCodes[83]=false;
-    }else if(keyCodes[69]){
-        robot.moveUpperLimbs(0.2);
-        keyCodes[69]=false;
-    }else if(keyCodes[68]){
-        robot.moveUpperLimbs(-0.2);
-        keyCodes[68]=false;
-    }else if(keyCodes[82]){
-        robot.rotateHead(1);
-        keyCodes[82]=false;
-    }else if(keyCodes[70]){
-        robot.rotateHead(-1);
-        keyCodes[70]=false;
-    }else if(keyCodes[54]){
-        redBasicMaterial.wireframe=!redBasicMaterial.wireframe;
-        blueBasicMaterial.wireframe=!blueBasicMaterial.wireframe;
-        blackBasicMaterial.wireframe=!blackBasicMaterial.wireframe;
-        greyBasicMaterial.wireframe=!greyBasicMaterial.wireframe;
-        keyCodes[54]=false;
-    }
-    else if(keyCodes[49]){
-        activeCamera = cameras.front
-        keyCodes[49] = false;
+    for (const key in keyCodes) {
+        if (keyCodes[key]) {
+            switch (key) {
+                case "37": //arrow left
+                    trailer.moveX(-1);
+                    break;
+                case "38": //arrow up
+                    trailer.moveZ(-1);
+                    break;
+                case "39": //arrow right
+                    trailer.moveX(1);
+                    break;
+                case "40": //arrow down
+                    trailer.moveZ(1);
+                    break;
+                case "81": //Q
+                    robot.rotateFeet(1);
+                    break;
+                case "65": //A
+                    robot.rotateFeet(-1);
+                    break;
+                case "87": //W
+                    robot.rotateLowerLimbs(1);
+                    break;
+                case "83": //S
+                    robot.rotateLowerLimbs(-1);
+                    break;
+                case "69": //E
+                    robot.moveUpperLimbs(0.2);
+                    break;
+                case "68": //D
+                    robot.moveUpperLimbs(-0.2);
+                    break;
+                case "82": //R
+                    robot.rotateHead(1);
+                    break;
+                case "70": //F
+                    robot.rotateHead(-1);
+                    break;
+                case "54": //6
+                    redBasicMaterial.wireframe = !redBasicMaterial.wireframe;
+                    blueBasicMaterial.wireframe = !blueBasicMaterial.wireframe;
+                    blackBasicMaterial.wireframe = !blackBasicMaterial.wireframe;
+                    greyBasicMaterial.wireframe = !greyBasicMaterial.wireframe;
+                    break;
+                case "49":
+                    activeCamera = cameras.front;
+                    break;
+                case "50":
+                    activeCamera = cameras.side;
+                    break;
+                case "51":
+                    activeCamera = cameras.top;
+                    break;
+                case "52":
+                    activeCamera = cameras.ortographic;
+                    break;
+                case "53":
+                    activeCamera = cameras.perspective;
+                    break;
+            }
 
-    }
-    else if(keyCodes[50]){
-        activeCamera = cameras.side
-        console.log(activeCamera)
-        keyCodes[50] = false;
-    }
-    else if(keyCodes[51]){
-        activeCamera = cameras.top
-        keyCodes[51] = false;
-
-    }
-    else if(keyCodes[52]){
-        activeCamera = cameras.ortographic
-        keyCodes[52] = false;
-
-    }
-    else if(keyCodes[53]){
-        activeCamera = cameras.perspective
-        console.log(activeCamera);
-        keyCodes[53] = false;
-
+            // Definir a tecla como falsa após executar a ação correspondente
+            keyCodes[key] = false;
+        }
     }
 
     render();
