@@ -13,7 +13,18 @@ var blackBasicMaterial = new THREE.MeshBasicMaterial({ color: 'black', wireframe
 var greyBasicMaterial = new THREE.MeshBasicMaterial({ color: 'grey', wireframe: true });
 
 
+
 var robotSizes = {
+    container: {
+        x:8,
+        y:8,
+        z:19
+    },
+    connector: {
+        x:1,
+        y:1,
+        z:1
+    },
     chest: {
         x: 8,
         y: 4,
@@ -103,9 +114,12 @@ function createScene(){
     scene.add(new THREE.AxisHelper(10));
 
 
-    createTrailer(30, 0.5, 10);
+    //createTrailer(30, 0.5, 10);
+    trailer = new Trailer(30, 0.5, 10);
     robot = new Robot(0,0,0);
+    scene.add(trailer);
     scene.add(robot);
+    
 
 }
 
@@ -207,9 +221,8 @@ function createIsometricPerspectiveCamera() {
 
 function addContainer(obj, x, y, z){
     'use strict';
-    material_container = new THREE.MeshBasicMaterial({ color: 0xa9a9a9, wireframe: true });
-    geometry = new THREE.CubeGeometry(8, 8, 19);
-    var mesh1 = new THREE.Mesh(geometry, material_container);
+   
+    var mesh1 = createCube(robotSizes.container, greyBasicMaterial);
     mesh1.position.set(x, y, z);
     obj.add(mesh1);
 }
@@ -218,29 +231,41 @@ function addContainer(obj, x, y, z){
 function addConnector(obj, x, y, z){
     'use strict';
 
-    material_connector = new THREE.MeshBasicMaterial({ color: 0x00008b, wireframe: true });
-    var geometry_connector = new THREE.CylinderGeometry(1, 1, 1);
-    var mesh1 = new THREE.Mesh(geometry_connector, material_connector);
+    var mesh1 = createCylinder(robotSizes.connector, redBasicMaterial);
     mesh1.position.set(x, y, z);
     obj.add(mesh1);
 }
 
-function createTrailer(x, y, z){
+class Trailer extends THREE.Object3D {
+    constructor(x, y, z) {
+        super();
+        createTrailer(this, x, y, z);
+    }
+
+    moveX(x){
+        trailer.position.x += x;
+    }
+    moveZ(z){
+        trailer.position.z += z;
+    }
+}
+
+function createTrailer(obj ,x, y, z){
     'use strict';
 
-    trailer = new THREE.Object3D();
-    addWheel(trailer, -3.25, -5, -8.5);
-    addWheel(trailer, 3.25, -5, -8.5);
-    addWheel(trailer, -3.25, -5, -6);
-    addWheel(trailer, 3.25, -5, -6);
-    addConnector(trailer, 0, -4.5, 8.5);
-    addContainer(trailer, 0, 0, 0);
+  
+    addWheel(obj, -3.25, -5, -8.5);
+    addWheel(obj, 3.25, -5, -8.5);
+    addWheel(obj, -3.25, -5, -6);
+    addWheel(obj, 3.25, -5, -6);
+    addConnector(obj, 0, -4.5, 8.5);
+    addContainer(obj, 0, 0, 0);
     
-    trailer.position.x = x;
-    trailer.position.y = y;
-    trailer.position.z = z;
+    // trailer.position.x = x;
+    // trailer.position.y = y;
+    // trailer.position.z = z;
 
-    scene.add(trailer);
+    // scene.add(trailer);
 
 }
 
@@ -652,7 +677,7 @@ function init() {
 
     createScene();
     createCameras();
-    camera = frontCamera;
+    camera = sideCamera;
 
     render();
     window.addEventListener("keydown", onKeyDown);
@@ -666,16 +691,16 @@ function init() {
 function animate() {
     'use strict';
     if(keyCodes[37]){
-        trailer.position.x -= 1;
+        trailer.moveX(-1);
         keyCodes[37]=false;
     }else if(keyCodes[38]){
-        trailer.position.z -= 1;
+        trailer.moveZ(-1);
         keyCodes[38]=false;
     }else if(keyCodes[39]){
-        trailer.position.x += 1;
+        trailer.moveX(1);
         keyCodes[39]=false;
     }else if(keyCodes[40]){
-        trailer.position.z += 1;
+        trailer.moveZ(1);
         keyCodes[40]=false;
     }else if(keyCodes[81]){
         robot.rotateFeet(1);
