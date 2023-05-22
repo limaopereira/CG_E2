@@ -5,7 +5,7 @@
 var  scene, renderer,camera,frontCamera, sideCamera, topCamera, ortographicCamera, perspectiveCamera;
 var geometry, material, material_container, material_wheel, material_connector, mesh;
 var cameras = [];
-var trailer, robot;
+var trailer, robot, bounding_box_trailer, boundingbox_robot;
 var keyCodes = [];
 var redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: true});
 var blueBasicMaterial = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
@@ -102,6 +102,22 @@ var freedomDegrees = {
     delta1: 0
 }
 
+/////////////////////
+/*   CONSTANTS     */
+/////////////////////
+
+const X_MIN_ROBOT = -4.25
+const X_MAX_ROBOT = 4.25
+const Y_MIN_ROBOT = -5.5
+const Y_MAX_ROBOT = 3.5
+const Z_MIN_ROBOT = -5
+const Z_MAX_ROBOT = 2.25
+const X_MIN_TRAILER = -4
+const X_MAX_TRAILER = 4
+const Y_MIN_TRAILER = -6
+const Y_MAX_TRAILER = 4
+const Z_MIN_TRAILER = -9.5
+const Z_MAX_TRAILER = 9.5
 
 /////////////////////
 /* CREATE SCENE(S) */
@@ -115,8 +131,10 @@ function createScene(){
 
 
     //createTrailer(30, 0.5, 10);
-    trailer = new Trailer(30, 0.5, 10);
-    robot = new Robot(0,0,0);
+    bounding_box_trailer = new BoundingBox(X_MIN_TRAILER, X_MAX_TRAILER, Y_MIN_TRAILER, Y_MAX_TRAILER, Z_MIN_TRAILER, Z_MAX_TRAILER);
+    trailer = new Trailer(30, 0.5, 10, bounding_box_trailer);
+    boundingbox_robot = new BoundingBox(X_MIN_ROBOT, X_MAX_ROBOT, Y_MIN_ROBOT, Y_MAX_ROBOT, Z_MIN_ROBOT, Z_MAX_ROBOT);
+    robot = new Robot(0,0,0,boundingbox_robot);
     scene.add(trailer);
     scene.add(robot);
     
@@ -237,8 +255,9 @@ function addConnector(obj, x, y, z){
 }
 
 class Trailer extends THREE.Object3D {
-    constructor(x, y, z) {
+    constructor(x, y, z, bounding_box) {
         super();
+        this.bounding_box = bounding_box;
         createTrailer(this, x, y, z);
     }
 
@@ -287,7 +306,7 @@ class BodyGroup extends THREE.Object3D{
 }
 
 class Robot extends THREE.Object3D{
-    constructor(x , y, z){
+    constructor(x , y, z, bounding_box){
         super();
         this.chestGroup = new BodyGroup();
         this.leftUpperLimbsGroup = new BodyGroup();
@@ -297,6 +316,7 @@ class Robot extends THREE.Object3D{
         this.rightLowerLimbsGroup = new BodyGroup();
         this.leftFootGroup = new BodyGroup();
         this.rightFootGroup = new BodyGroup();
+        this.boundingbox = bounding_box;
         this.add(this.chestGroup);
         createRobot(this, x, y, z);
     }
@@ -618,6 +638,93 @@ function addLeg(obj, x, y, z){
     return leg;
 }
 
+////////////////////////
+// BOUNDING BOX CLASS //
+////////////////////////
+
+class BoundingBox {
+
+    constructor(x_min, x_max, y_min, y_max, z_min, z_max){
+        this.x_min = x_min;
+        this.x_max = x_max;
+        this.y_min = y_min;
+        this.y_max = y_max;
+        this.z_min = z_min;
+        this.z_max = z_max;;   
+    }
+
+    //getters
+
+    get x_min_get(){
+        return this.x_min;
+    }
+
+    get x_max_get(){
+        return this.x_max;
+    }
+
+    get y_min_get(){
+        return this.y_min;
+    }
+
+    get y_max_get(){
+        return this.y_max;
+    }
+
+    get z_min_get(){
+        return this.z_min;
+    }
+
+    get z_max_get(){
+        return this.z_max;
+    }
+
+    //setters
+
+    set x_min_set(x_min){
+        this.x_min = x_min;
+    }
+
+    set x_max_set(x_max){
+        this.x_max = x_max;
+    }
+
+    set y_min_set(y_min){
+        this.y_min = y_min;
+    }
+
+    set y_max_set(y_max){
+        this.y_max = y_max;
+    }
+
+    set z_min_set(z_min){
+        this.z_min = z_min;
+    }
+
+    set z_max_set(z_max){
+        this.z_max = z_max;
+    }
+
+    //methods
+
+    intersect(other){
+        return (this.x_min <= other.x_max && this.x_max >= other.x_min) &&
+               (this.y_min <= other.y_max && this.y_max >= other.y_min) &&
+                (this.z_min <= other.z_max && this.z_max >= other.z_min);
+    }
+
+    update_max_point(x,y,z){
+        this.x = x;
+        this.y_max = y;
+        this.z_max = z;
+    }
+
+    update_min_point(x,y,z){
+        this.x_min = x;
+        this.y_min = y;
+        this.z_min = z;
+    }
+}
 
 //////////////////////
 /* CHECK COLLISIONS */
@@ -625,6 +732,7 @@ function addLeg(obj, x, y, z){
 function checkCollisions(){
     'use strict';
 
+    return robot.bounding_box.intersect(trailer.bounding_box);
 }
 
 ///////////////////////
