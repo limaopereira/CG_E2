@@ -8,7 +8,7 @@ var cameras = {};
 var activeCamera;
 var trailer, robot;
 var cameras = [];
-var trailer, robot, bounding_box_trailer, boundingbox_robot;
+var trailer, robot,bounding_box_trailer, boundingbox_robot;
 var keyCodes = [];
 var redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: true});
 var blueBasicMaterial = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
@@ -115,6 +115,7 @@ const Y_MIN_ROBOT = -5.5
 const Y_MAX_ROBOT = 3.5
 const Z_MIN_ROBOT = -5
 const Z_MAX_ROBOT = 2.25
+
 const X_MIN_TRAILER = -4
 const X_MAX_TRAILER = 4
 const Y_MIN_TRAILER = -6
@@ -122,6 +123,8 @@ const Y_MAX_TRAILER = 4
 const Z_MIN_TRAILER = -9.5
 const Z_MAX_TRAILER = 9.5
 
+const CONNECTION_X = 0
+const CONNECTION_Z = -16
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -140,8 +143,6 @@ function createScene(){
     robot = new Robot(0,0,0,boundingbox_robot);
     scene.add(trailer);
     scene.add(robot);
-    
-
 }
 
 //////////////////////
@@ -259,9 +260,9 @@ function addConnector(obj, x, y, z){
 }
 
 class Trailer extends THREE.Object3D {
-    constructor(x, y, z, bounding_box) {
+    constructor(x, y, z, boundingBox) {
         super();
-        this.bounding_box = bounding_box;
+        this.bounding_box = boundingBox;
         createTrailer(this, x, y, z);
     }
 
@@ -304,7 +305,7 @@ class BodyGroup extends THREE.Object3D{
 }
 
 class Robot extends THREE.Object3D{
-    constructor(x , y, z, bounding_box){
+    constructor(x , y, z, boundingBox){
         super();
         this.chestGroup = new BodyGroup();
         this.leftUpperLimbsGroup = new BodyGroup();
@@ -314,7 +315,7 @@ class Robot extends THREE.Object3D{
         this.rightLowerLimbsGroup = new BodyGroup();
         this.leftFootGroup = new BodyGroup();
         this.rightFootGroup = new BodyGroup();
-        this.boundingbox = bounding_box;
+        this.bounding_box = boundingBox;
         this.add(this.chestGroup);
         createRobot(this, x, y, z);
     }
@@ -706,13 +707,13 @@ class BoundingBox {
     //methods
 
     intersect(other){
-        return (this.x_min <= other.x_max && this.x_max >= other.x_min) &&
-               (this.y_min <= other.y_max && this.y_max >= other.y_min) &&
-                (this.z_min <= other.z_max && this.z_max >= other.z_min);
+        return (this.x_min < other.x_max && this.x_max > other.x_min) &&
+               (this.y_min < other.y_max && this.y_max > other.y_min) &&
+                (this.z_min < other.z_max && this.z_max > other.z_min);
     }
 
     update_max_point(x,y,z){
-        this.x = x;
+        this.x_max = x;
         this.y_max = y;
         this.z_max = z;
     }
@@ -799,6 +800,7 @@ function animate() {
             switch (key) {
                 case "37": //arrow left
                     trailer.moveX(-1);
+                    
                     break;
                 case "38": //arrow up
                     trailer.moveZ(-1);
