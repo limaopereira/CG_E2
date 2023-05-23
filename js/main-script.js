@@ -322,19 +322,16 @@ class Trailer extends THREE.Object3D {
         super();
         this.createTrailer(x, y, z);
         this.boundingBox = this.createBoundingBox(x,y,z);
-        console.log(this.boundingBox);
     }
 
     moveX(x){
         trailer.position.x += x;
         trailer.boundingBox.x_add(x);
-        console.log(this.boundingBox);
     }
 
     moveZ(z){
         trailer.position.z += z;
         trailer.boundingBox.z_add(z);
-        console.log(this.boundingBox);
     }
 
     createTrailer(x,y,z){
@@ -667,16 +664,26 @@ class Robot extends THREE.Object3D{
     }
 
     createBoundingBox(x, y, z){
-        var xMin = x - sizes.chest.x/2 - sizes.arm.x - sizes.pipe.x;
-        var xMax = x + sizes.chest.x/2 + sizes.arm.x + sizes.pipe.x;
+        // var xMin = x - sizes.chest.x/2 - sizes.arm.x - sizes.pipe.x;
+        // var xMax = x + sizes.chest.x/2 + sizes.arm.x + sizes.pipe.x;
 
-        var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - sizes.waist.y - sizes.thigh.y - sizes.leg.y;
-        var yMax = y + sizes.chest.y/2 + sizes.head.y/2 + sizes.antenna.y    
+        var xMin = x - sizes.chest.x/2 - sizes.pipe.x;
+        var xMax = x + sizes.chest.x/2 + sizes.pipe.x;
+
+        // var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - sizes.waist.y - sizes.thigh.y - sizes.leg.y;
+        // var yMax = y + sizes.chest.y/2 + sizes.head.y/2 + sizes.antenna.y    
         
-        var zMin = z - sizes.chest.z/2 - sizes.arm.z;
-        var zMax = z + sizes.chest.z/2
+        var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - 2*sizes.wheel.y
+        var yMax = y + sizes.chest.y/2 + sizes.pipe.y/2;
+
+        // var zMin = z - sizes.chest.z/2 - sizes.arm.z;
+        // var zMax = z + sizes.chest.z/2
+
+        var zMin = z - sizes.chest.z/2 - sizes.thigh.y - sizes.leg.y - sizes.foot.y;
+        var zMax = z + sizes.chest.z/2;
 
         var boundingBox = new BoundingBox(xMin, xMax, yMin, yMax, zMin, zMax);
+        console.log(boundingBox);
         return boundingBox;
     }
 }
@@ -794,18 +801,6 @@ function init() {
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
-    keyCodes[37]=false;
-    keyCodes[38]=false;
-    keyCodes[39]=false;
-    keyCodes[40]=false;
-    keyCodes[81]=false;
-    keyCodes[87]=false;
-    keyCodes[69]=false;
-    keyCodes[82]=false;
-    keyCodes[65]=false;
-    keyCodes[83]=false;
-    keyCodes[68]=false;
-    keyCodes[70]=false;
 
     createScene();
     createCameras();
