@@ -1,21 +1,95 @@
-//////////////////////
-/* GLOBAL VARIABLES */
-//////////////////////
+/////////////////////
+/*   CONSTANTS     */
+/////////////////////
 
-var  scene, renderer,camera,frontCamera, sideCamera, topCamera, ortographicCamera, perspectiveCamera;
-var geometry, material, material_container, material_wheel, material_connector, mesh;
-var cameras = {};
-var activeCamera;
-var trailer, robot;
-var cameras = [];
-var trailer, robot,bounding_box_trailer, boundingbox_robot;
-var keyCodes = [];
-var redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: true});
-var blueBasicMaterial = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
-var blackBasicMaterial = new THREE.MeshBasicMaterial({ color: 'black', wireframe: true });
-var greyBasicMaterial = new THREE.MeshBasicMaterial({ color: 'grey', wireframe: true });
-var in_animation = false;
-var is_orthographic = true;
+const ARROW_LEFT = "37";
+const ARROW_UP = "38";
+const ARROW_RIGHT = "39";
+const ARROW_DOWN = "40";
+const KEY_Q = "81";
+const KEY_A = "65";
+const KEY_W = "87";
+const KEY_S = "83";
+const KEY_E = "69";
+const KEY_D = "68";
+const KEY_R = "82";
+const KEY_F = "70";
+const KEY_6 = "54";
+const KEY_1 = "49";
+const KEY_2 = "50";
+const KEY_3 = "51";
+const KEY_4 = "52";
+const KEY_5 = "53";
+
+const TRAILER_MOVE_UNIT = 1;
+const ROBOT_ROTATION_DEGREES = 1;
+const ROBOT_MOVE_UNIT = 0.2;
+
+const X_MIN_ROBOT = -4.25
+const X_MAX_ROBOT = 4.25
+const Y_MIN_ROBOT = -5.5
+const Y_MAX_ROBOT = 3.5
+const Z_MIN_ROBOT = -5
+const Z_MAX_ROBOT = 2.25
+
+const X_MIN_TRAILER = 26
+const X_MAX_TRAILER = 34
+const Y_MIN_TRAILER = -5.5
+const Y_MAX_TRAILER = 4.5
+const Z_MIN_TRAILER = -0.5
+const Z_MAX_TRAILER = 18.5
+
+const CONNECTION_X = 0
+const CONNECTION_Z = -16
+
+const keyHandlers = {
+    [ARROW_LEFT]: () => {
+        trailer.moveX(-TRAILER_MOVE_UNIT);
+        trailer.bounding_box.x_max_set=trailer.bounding_box.x_max_get-1;
+        trailer.bounding_box.x_min_set=trailer.bounding_box.x_min_get-1;
+    },
+    [ARROW_UP]: () => {
+        trailer.moveZ(-TRAILER_MOVE_UNIT);
+        trailer.bounding_box.z_max_set=trailer.bounding_box.z_max_get-1;
+        trailer.bounding_box.z_min_set=trailer.bounding_box.z_min_get-1;
+    },
+    [ARROW_RIGHT]: () => {
+        trailer.moveX(TRAILER_MOVE_UNIT);
+        trailer.bounding_box.z_max_set=trailer.bounding_box.x_max_get+1;
+        trailer.bounding_box.z_min_set=trailer.bounding_box.x_min_get+1;
+    },
+    [ARROW_DOWN]: () => {
+        trailer.moveZ(TRAILER_MOVE_UNIT);
+        trailer.bounding_box.z_max_set=trailer.bounding_box.z_max_get+1;
+        trailer.bounding_box.z_min_set=trailer.bounding_box.z_min_get+1;
+    },
+    [KEY_Q]: () => robot.rotateFeet(2*ROBOT_ROTATION_DEGREES),
+    [KEY_A]: () => robot.rotateFeet(-2*ROBOT_ROTATION_DEGREES),
+    [KEY_W]: () => robot.rotateLowerLimbs(ROBOT_ROTATION_DEGREES),
+    [KEY_S]: () => robot.rotateLowerLimbs(-ROBOT_ROTATION_DEGREES),
+    [KEY_E]: () => robot.moveUpperLimbs(ROBOT_MOVE_UNIT),
+    [KEY_D]: () => robot.moveUpperLimbs(-ROBOT_MOVE_UNIT),
+    [KEY_R]: () => robot.rotateHead(-2*ROBOT_ROTATION_DEGREES),
+    [KEY_F]: () => robot.rotateHead(2*ROBOT_ROTATION_DEGREES),
+    [KEY_1]: () => { activeCamera = cameras.front; keyCodes[KEY_1] = false;is_orthographic=true;},
+    [KEY_2]: () => { activeCamera = cameras.side; keyCodes[KEY_2] = false; is_orthographic=true;},
+    [KEY_3]: () => { activeCamera = cameras.top; keyCodes[KEY_3] = false; is_orthographic=true;},
+    [KEY_4]: () => { activeCamera = cameras.ortographic;  keyCodes[KEY_4] = false; is_orthographic=true;},
+    [KEY_5]: () => { activeCamera = cameras.perspective;  keyCodes[KEY_5] = false; is_orthographic=false;},
+    [KEY_6]: () => { 
+        for(const material of materials){
+            material.wireframe = !material.wireframe;
+        }
+        keyCodes[KEY_6] = false;
+    },
+}
+
+const materials = [
+    redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: true}),
+    blueBasicMaterial = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true }),
+    blackBasicMaterial = new THREE.MeshBasicMaterial({ color: 'black', wireframe: true }),
+    greyBasicMaterial = new THREE.MeshBasicMaterial({ color: 'grey', wireframe: true }),
+];
 
 var robotSizes = {
     container: {
@@ -94,9 +168,21 @@ var robotSizes = {
         y:3,
         z:0.25,
     }
-
 }
 
+
+//////////////////////
+/* GLOBAL VARIABLES */
+//////////////////////
+
+var  scene, renderer,camera;
+var cameras = {};
+var activeCamera;
+var trailer, robot;
+var trailer, robot,bounding_box_trailer, boundingbox_robot;
+var keyCodes = {};
+var in_animation = false;
+var is_orthographic = true;
 
 var freedomDegrees = {
     v1: 0,
@@ -105,26 +191,7 @@ var freedomDegrees = {
     delta1: 0
 }
 
-/////////////////////
-/*   CONSTANTS     */
-/////////////////////
 
-const X_MIN_ROBOT = -4.25
-const X_MAX_ROBOT = 4.25
-const Y_MIN_ROBOT = -5.5
-const Y_MAX_ROBOT = 3.5
-const Z_MIN_ROBOT = -5
-const Z_MAX_ROBOT = 2.25
-
-const X_MIN_TRAILER = 26
-const X_MAX_TRAILER = 34
-const Y_MIN_TRAILER = -5.5
-const Y_MAX_TRAILER = 4.5
-const Z_MIN_TRAILER = -0.5
-const Z_MAX_TRAILER = 18.5
-
-const CONNECTION_X = 0
-const CONNECTION_Z = -16
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
@@ -540,16 +607,16 @@ function addLowerLimbs(obj, robotObj, x, y, z){
 function createCube(size, material){
     'use strict'
     var {x, y, z} = size;
-    geometry = new THREE.CubeGeometry(x, y, z);
-    mesh = new THREE.Mesh(geometry, material);
+    var geometry = new THREE.CubeGeometry(x, y, z);
+    var mesh = new THREE.Mesh(geometry, material);
     return mesh;
 }
 
 function createCylinder(size, material){
     'use strict'
     var {x, y, z} = size;
-    geometry = new THREE.CylinderGeometry(x, y, z);
-    mesh = new THREE.Mesh(geometry, material);
+    var geometry = new THREE.CylinderGeometry(x, y, z);
+    var mesh = new THREE.Mesh(geometry, material);
     return mesh;
 }
 
@@ -796,82 +863,8 @@ function init() {
 function animate() {
     'use strict';
     for (const key in keyCodes) {
-        if (keyCodes[key] && !in_animation) {
-            switch (key) {
-                case "37": //arrow left
-                    trailer.moveX(-1);
-                    trailer.bounding_box.x_max_set=trailer.bounding_box.x_max_get-1;
-                    trailer.bounding_box.x_min_set=trailer.bounding_box.x_min_get-1;
-                    break;
-                case "38": //arrow up
-                    trailer.moveZ(-1);
-                    trailer.bounding_box.z_max_set=trailer.bounding_box.z_max_get-1;
-                    trailer.bounding_box.z_min_set=trailer.bounding_box.z_min_get-1;
-                    break;
-                case "39": //arrow right
-                    trailer.moveX(1);
-                    trailer.bounding_box.x_max_set=trailer.bounding_box.x_max_get+1;
-                    trailer.bounding_box.x_min_set=trailer.bounding_box.x_min_get+1;
-                    break;
-                case "40": //arrow down
-                    trailer.moveZ(1);
-                    trailer.bounding_box.z_max_set=trailer.bounding_box.z_max_get+1;
-                    trailer.bounding_box.z_min_set=trailer.bounding_box.z_min_get+1;
-                    break;
-                case "81": //Q
-                    robot.rotateFeet(1);
-                    break;
-                case "65": //A
-                    robot.rotateFeet(-1);
-                    break;
-                case "87": //W
-                    robot.rotateLowerLimbs(1);
-                    break;
-                case "83": //S
-                    robot.rotateLowerLimbs(-1);
-                    break;
-                case "69": //E
-                    robot.moveUpperLimbs(0.2);
-                    break;
-                case "68": //D
-                    robot.moveUpperLimbs(-0.2);
-                    break;
-                case "82": //R
-                    robot.rotateHead(1);
-                    break;
-                case "70": //F
-                    robot.rotateHead(-1);
-                    break;
-                case "54": //6
-                    redBasicMaterial.wireframe = !redBasicMaterial.wireframe;
-                    blueBasicMaterial.wireframe = !blueBasicMaterial.wireframe;
-                    blackBasicMaterial.wireframe = !blackBasicMaterial.wireframe;
-                    greyBasicMaterial.wireframe = !greyBasicMaterial.wireframe;
-                    break;
-                case "49":
-                    activeCamera = cameras.front;
-                    is_orthographic=true;
-                    break;
-                case "50":
-                    activeCamera = cameras.side;
-                    is_orthographic=true;
-                    break;
-                case "51":
-                    activeCamera = cameras.top;
-                    is_orthographic= true;
-                    break;
-                case "52":
-                    activeCamera = cameras.ortographic;
-                    is_orthographic= true;
-                    break;
-                case "53":
-                    activeCamera = cameras.perspective;
-                    is_orthographic= false;
-                    break;
-            }
-
-            // Definir a tecla como falsa após executar a ação correspondente
-            keyCodes[key] = false;
+        if (keyCodes[key] && keyHandlers[key]) {
+            keyHandlers[key]();
         }
     }
     
@@ -918,71 +911,7 @@ function onResize() {
 ///////////////////////
 function onKeyDown(e) {
     'use strict';
-    switch (e.keyCode) {
-        case 37: //arrow left
-            keyCodes[37]=true;
-            break;
-        case 38: //arrow up
-            keyCodes[38]=true;
-            break;
-        case 39: //arrow right
-            keyCodes[39]=true;
-            break;  
-        case 40: //arrow down
-            keyCodes[40]=true;
-            break; 
-        case 81: //Q
-        case 113: //q
-            keyCodes[81]=true;
-            break;
-        case 65: //A
-        case 97: //a
-            keyCodes[65]=true;
-            break;
-        case 87: //W
-        case 119: //w
-            keyCodes[87]=true;
-            break;
-        case 83: //S
-        case 115: //s
-            keyCodes[83]=true;
-            break;
-        case 69: //E
-        case 101: //e
-            keyCodes[69]=true;
-            break;
-        case 68: //D
-        case 100: //d
-            keyCodes[68]=true;
-            break;
-        case 82: //R
-        case 114: //r
-            keyCodes[82]=true;
-            break;
-        case 70: //F
-        case 102: //f
-            keyCodes[70]=true;
-            break;
-        case 54: //6
-            keyCodes[54]=true;
-            break;
-        case 49:
-            keyCodes[49]=true;
-            break;
-        case 50:
-            keyCodes[50]=true;
-            break;
-        case 51:
-            keyCodes[51]=true;
-            break;
-        case 52:
-            keyCodes[52]=true;
-            break;
-        case 53:
-            keyCodes[53]=true;
-            break;
-    }
-    
+    keyCodes[e.keyCode] = true;
 }
 
 ///////////////////////
@@ -990,6 +919,5 @@ function onKeyDown(e) {
 ///////////////////////
 function onKeyUp(e){
     'use strict';
-
-
+    keyCodes[e.keyCode] = false;
 }
