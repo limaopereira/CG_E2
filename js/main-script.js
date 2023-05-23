@@ -14,7 +14,8 @@ var redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: tr
 var blueBasicMaterial = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true });
 var blackBasicMaterial = new THREE.MeshBasicMaterial({ color: 'black', wireframe: true });
 var greyBasicMaterial = new THREE.MeshBasicMaterial({ color: 'grey', wireframe: true });
-
+var in_animation = false;
+var is_orthographic = true;
 
 var robotSizes = {
     container: {
@@ -794,7 +795,7 @@ function init() {
 function animate() {
     'use strict';
     for (const key in keyCodes) {
-        if (keyCodes[key]) {
+        if (keyCodes[key] && !in_animation) {
             switch (key) {
                 case "37": //arrow left
                     trailer.moveX(-1);
@@ -840,18 +841,23 @@ function animate() {
                     break;
                 case "49":
                     activeCamera = cameras.front;
+                    is_orthographic=true;
                     break;
                 case "50":
                     activeCamera = cameras.side;
+                    is_orthographic=true;
                     break;
                 case "51":
                     activeCamera = cameras.top;
+                    is_orthographic= true;
                     break;
                 case "52":
                     activeCamera = cameras.ortographic;
+                    is_orthographic= true;
                     break;
                 case "53":
                     activeCamera = cameras.perspective;
+                    is_orthographic= false;
                     break;
             }
 
@@ -859,7 +865,12 @@ function animate() {
             keyCodes[key] = false;
         }
     }
-
+    
+    if(checkCollisions()){
+        console.log("COLLISION");
+        handleCollisions();
+    }
+   
     render();
 
     requestAnimationFrame(animate);
@@ -873,8 +884,23 @@ function onResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     if (window.innerHeight > 0 && window.innerWidth > 0) {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
+        if(is_orthographic){
+            if(window.innerHeight > window.innerWidth){
+                activeCamera.left = window.innerWidth / -40;
+                activeCamera.right = window.innerWidth / 40;
+                activeCamera.top = window.innerHeight / 40;
+                activeCamera.bottom = window.innerHeight / -40;
+            }else{
+                activeCamera.left = window.innerWidth / -40;
+                activeCamera.right = window.innerWidth / 40;
+                activeCamera.top = window.innerHeight / 40;
+                activeCamera.bottom = window.innerHeight / -40;
+            }
+        }else{
+            activeCamera.aspect = window.innerWidth / window.innerHeight;
+        }
+        
+        activeCamera.updateProjectionMatrix();
     }
 
 }
