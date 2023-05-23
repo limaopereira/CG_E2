@@ -25,43 +25,19 @@ const TRAILER_MOVE_UNIT = 1;
 const ROBOT_ROTATION_DEGREES = 1;
 const ROBOT_MOVE_UNIT = 0.2;
 
-const X_MIN_ROBOT = -4.25
-const X_MAX_ROBOT = 4.25
-const Y_MIN_ROBOT = -5.5
-const Y_MAX_ROBOT = 3.5
-const Z_MIN_ROBOT = -5
-const Z_MAX_ROBOT = 2.25
-
-const X_MIN_TRAILER = 26
-const X_MAX_TRAILER = 34
-const Y_MIN_TRAILER = -5.5
-const Y_MAX_TRAILER = 4.5
-const Z_MIN_TRAILER = 0.5
-const Z_MAX_TRAILER = 19.5
-
-const CONNECTION_X = 0
-const CONNECTION_Z = -16
-
 const keyHandlers = {
     [ARROW_LEFT]: () => {
         trailer.moveX(-TRAILER_MOVE_UNIT);
-        trailer.bounding_box.x_max_set=trailer.bounding_box.x_max_get-1;
-        trailer.bounding_box.x_min_set=trailer.bounding_box.x_min_get-1;
+        
     },
     [ARROW_UP]: () => {
         trailer.moveZ(-TRAILER_MOVE_UNIT);
-        trailer.bounding_box.z_max_set=trailer.bounding_box.z_max_get-1;
-        trailer.bounding_box.z_min_set=trailer.bounding_box.z_min_get-1;
     },
     [ARROW_RIGHT]: () => {
         trailer.moveX(TRAILER_MOVE_UNIT);
-        trailer.bounding_box.z_max_set=trailer.bounding_box.x_max_get+1;
-        trailer.bounding_box.z_min_set=trailer.bounding_box.x_min_get+1;
     },
     [ARROW_DOWN]: () => {
         trailer.moveZ(TRAILER_MOVE_UNIT);
-        trailer.bounding_box.z_max_set=trailer.bounding_box.z_max_get+1;
-        trailer.bounding_box.z_min_set=trailer.bounding_box.z_min_get+1;
     },
     [KEY_Q]: () => robot.rotateFeet(2*ROBOT_ROTATION_DEGREES),
     [KEY_A]: () => robot.rotateFeet(-2*ROBOT_ROTATION_DEGREES),
@@ -179,7 +155,6 @@ var  scene, renderer,camera;
 var cameras = {};
 var activeCamera;
 var trailer, robot;
-var trailer, robot,bounding_box_trailer, boundingbox_robot;
 var keyCodes = {};
 var in_animation = false;
 var is_orthographic = true;
@@ -201,13 +176,9 @@ function createScene(){
     scene.background = new THREE.Color(0xcbd0b9);
 
     scene.add(new THREE.AxisHelper(10));
-
-
-    //createTrailer(30, 0.5, 10);
-    bounding_box_trailer = new BoundingBox(X_MIN_TRAILER, X_MAX_TRAILER, Y_MIN_TRAILER, Y_MAX_TRAILER, Z_MIN_TRAILER, Z_MAX_TRAILER);
-    trailer = new Trailer(30, 0.5, 10, bounding_box_trailer);
-    boundingbox_robot = new BoundingBox(X_MIN_ROBOT, X_MAX_ROBOT, Y_MIN_ROBOT, Y_MAX_ROBOT, Z_MIN_ROBOT, Z_MAX_ROBOT);
-    robot = new Robot(0,0,0,boundingbox_robot);
+    
+    trailer = new Trailer(30, 0.5, 10);
+    robot = new Robot(0,0,0);
     scene.add(trailer);
     scene.add(robot);
 }
@@ -347,10 +318,23 @@ function createCylinder(size, material){
 /* -------------------------------------------------- */
 
 class Trailer extends THREE.Object3D {
-    constructor(x, y, z, boundingBox) {
+    constructor(x, y, z) {
         super();
-        this.bounding_box = boundingBox;
         this.createTrailer(x, y, z);
+        this.boundingBox = this.createBoundingBox(x,y,z);
+        console.log(this.boundingBox);
+    }
+
+    moveX(x){
+        trailer.position.x += x;
+        trailer.boundingBox.x_add(x);
+        console.log(this.boundingBox);
+    }
+
+    moveZ(z){
+        trailer.position.z += z;
+        trailer.boundingBox.z_add(z);
+        console.log(this.boundingBox);
     }
 
     createTrailer(x,y,z){
@@ -370,12 +354,20 @@ class Trailer extends THREE.Object3D {
         this.position.set(x,y,z);
     }
 
-    moveX(x){
-        trailer.position.x += x;
+    createBoundingBox(x, y, z){
+        var xMin = x - sizes.container.x/2;
+        var xMax = x + sizes.container.x/2;
+
+        var yMin = y - sizes.container.y/2 - 2*sizes.wheel.y;
+        var yMax = y + sizes.container.y/2;    
+        
+        var zMin = z - sizes.container.z/2;
+        var zMax = z + sizes.container.z/2;
+
+        var boundingBox = new BoundingBox(xMin, xMax, yMin, yMax, zMin, zMax);
+        return boundingBox;
     }
-    moveZ(z){
-        trailer.position.z += z;
-    }
+
 }
 
 
@@ -398,7 +390,7 @@ class BodyGroup extends THREE.Object3D{
 
 
 class Robot extends THREE.Object3D{
-    constructor(x,y,z, boundingBox){
+    constructor(x,y,z){
         super();
         this.headGroup = this.createHeadGroup();
         this.upperLimbsGroup = this.createUpperLimbs();
@@ -406,7 +398,7 @@ class Robot extends THREE.Object3D{
         this.waist = this.createWaist();
         this.abdomen = this.createAbdomen();
         this.chest = this.createChest(x,y,z);
-        this.bounding_box = boundingBox;
+        this.boundingBox = this.createBoundingBox(x, y, z);
     }
 
     rotateFeet(degrees){
@@ -476,7 +468,6 @@ class Robot extends THREE.Object3D{
         head.add(rightEye);
         headGroup.add(head);
         headGroup.move(0, sizes.chest.y/2, -sizes.chest.z/2);
-        
         return headGroup;
     }
 
@@ -674,6 +665,20 @@ class Robot extends THREE.Object3D{
         return lowerLimbsGroup;
 
     }
+
+    createBoundingBox(x, y, z){
+        var xMin = x - sizes.chest.x/2 - sizes.arm.x - sizes.pipe.x;
+        var xMax = x + sizes.chest.x/2 + sizes.arm.x + sizes.pipe.x;
+
+        var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - sizes.waist.y - sizes.thigh.y - sizes.leg.y;
+        var yMax = y + sizes.chest.y/2 + sizes.head.y/2 + sizes.antenna.y    
+        
+        var zMin = z - sizes.chest.z/2 - sizes.arm.z;
+        var zMax = z + sizes.chest.z/2
+
+        var boundingBox = new BoundingBox(xMin, xMax, yMin, yMax, zMin, zMax);
+        return boundingBox;
+    }
 }
 
 ////////////////////////
@@ -719,29 +724,21 @@ class BoundingBox {
 
     //setters
 
-    set x_min_set(x_min){
-        this.x_min = x_min;
+    x_add(units){
+        this.x_max += units;
+        this.x_min += units;
     }
 
-    set x_max_set(x_max){
-        this.x_max = x_max;
+    y_add(units){
+        this.y_max += units;
+        this.y_min += units;
     }
 
-    set y_min_set(y_min){
-        this.y_min = y_min;
+    z_add(units){
+        this.z_max += units;
+        this.z_min += units;
     }
 
-    set y_max_set(y_max){
-        this.y_max = y_max;
-    }
-
-    set z_min_set(z_min){
-        this.z_min = z_min;
-    }
-
-    set z_max_set(z_max){
-        this.z_max = z_max;
-    }
 
     //methods
 
@@ -751,17 +748,6 @@ class BoundingBox {
                 (this.z_min < other.z_max && this.z_max > other.z_min);
     }
 
-    update_max_point(x,y,z){
-        this.x_max = x;
-        this.y_max = y;
-        this.z_max = z;
-    }
-
-    update_min_point(x,y,z){
-        this.x_min = x;
-        this.y_min = y;
-        this.z_min = z;
-    }
 }
 
 //////////////////////
@@ -769,7 +755,7 @@ class BoundingBox {
 //////////////////////
 function checkCollisions(){
     'use strict';
-    //return robot.bounding_box.intersect(trailer.bounding_box);
+    return robot.boundingBox.intersect(trailer.boundingBox);
 }
 
 ///////////////////////
