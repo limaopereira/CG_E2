@@ -36,8 +36,8 @@ const X_MIN_TRAILER = 26
 const X_MAX_TRAILER = 34
 const Y_MIN_TRAILER = -5.5
 const Y_MAX_TRAILER = 4.5
-const Z_MIN_TRAILER = -0.5
-const Z_MAX_TRAILER = 18.5
+const Z_MIN_TRAILER = 0.5
+const Z_MAX_TRAILER = 19.5
 
 const CONNECTION_X = 0
 const CONNECTION_Z = -16
