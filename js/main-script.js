@@ -116,12 +116,12 @@ const Y_MAX_ROBOT = 3.5
 const Z_MIN_ROBOT = -5
 const Z_MAX_ROBOT = 2.25
 
-const X_MIN_TRAILER = -4
-const X_MAX_TRAILER = 4
-const Y_MIN_TRAILER = -6
-const Y_MAX_TRAILER = 4
-const Z_MIN_TRAILER = -9.5
-const Z_MAX_TRAILER = 9.5
+const X_MIN_TRAILER = 26
+const X_MAX_TRAILER = 34
+const Y_MIN_TRAILER = -5.5
+const Y_MAX_TRAILER = 4.5
+const Z_MIN_TRAILER = -0.5
+const Z_MAX_TRAILER = 18.5
 
 const CONNECTION_X = 0
 const CONNECTION_Z = -16
@@ -730,7 +730,6 @@ class BoundingBox {
 //////////////////////
 function checkCollisions(){
     'use strict';
-
     return robot.bounding_box.intersect(trailer.bounding_box);
 }
 
@@ -739,6 +738,7 @@ function checkCollisions(){
 ///////////////////////
 function handleCollisions(){
     'use strict';
+    console.log("COLLISION");
 
 }
 
@@ -800,16 +800,23 @@ function animate() {
             switch (key) {
                 case "37": //arrow left
                     trailer.moveX(-1);
-                    
+                    trailer.bounding_box.x_max_set=trailer.bounding_box.x_max_get-1;
+                    trailer.bounding_box.x_min_set=trailer.bounding_box.x_min_get-1;
                     break;
                 case "38": //arrow up
                     trailer.moveZ(-1);
+                    trailer.bounding_box.z_max_set=trailer.bounding_box.z_max_get-1;
+                    trailer.bounding_box.z_min_set=trailer.bounding_box.z_min_get-1;
                     break;
                 case "39": //arrow right
                     trailer.moveX(1);
+                    trailer.bounding_box.x_max_set=trailer.bounding_box.x_max_get+1;
+                    trailer.bounding_box.x_min_set=trailer.bounding_box.x_min_get+1;
                     break;
                 case "40": //arrow down
                     trailer.moveZ(1);
+                    trailer.bounding_box.z_max_set=trailer.bounding_box.z_max_get+1;
+                    trailer.bounding_box.z_min_set=trailer.bounding_box.z_min_get+1;
                     break;
                 case "81": //Q
                     robot.rotateFeet(1);
@@ -869,7 +876,6 @@ function animate() {
     }
     
     if(checkCollisions()){
-        console.log("COLLISION");
         handleCollisions();
     }
    
