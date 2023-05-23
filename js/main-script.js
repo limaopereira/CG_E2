@@ -85,13 +85,13 @@ const keyHandlers = {
 }
 
 const materials = [
-    redBasicMaterial = new THREE.MeshBasicMaterial({ color: 'red', wireframe: true}),
-    blueBasicMaterial = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true }),
-    blackBasicMaterial = new THREE.MeshBasicMaterial({ color: 'black', wireframe: true }),
-    greyBasicMaterial = new THREE.MeshBasicMaterial({ color: 'grey', wireframe: true }),
+    red = new THREE.MeshBasicMaterial({ color: 'red', wireframe: true}),
+    blue = new THREE.MeshBasicMaterial({ color: 'blue', wireframe: true }),
+    black = new THREE.MeshBasicMaterial({ color: 'black', wireframe: true }),
+    grey = new THREE.MeshBasicMaterial({ color: 'grey', wireframe: true }),
 ];
 
-var robotSizes = {
+var sizes = {
     container: {
         x:8,
         y:8,
@@ -305,32 +305,69 @@ function createIsometricPerspectiveCamera() {
 ////////////////////////
 
 /* -------------------------------------------------- */
-/*                      TRAILER                       */
+/*                      GENERAL                       */
 /* -------------------------------------------------- */
 
 
-function addContainer(obj, x, y, z){
-    'use strict';
-   
-    var mesh1 = createCube(robotSizes.container, greyBasicMaterial);
-    mesh1.position.set(x, y, z);
-    obj.add(mesh1);
+function createMesh(type, size, mat, x, y, z, r_x = 0, r_y = 0, r_z = 0){
+    var mesh;
+    switch (type){
+        case 'cube':
+            mesh = createCube(size, mat)
+            break;
+        case 'cylinder':
+            mesh = createCylinder(size, mat);
+            break;
+    }
+    mesh.position.set(x,y,z);
+    mesh.rotation.x += r_x * Math.PI/180;
+    mesh.rotation.y += r_y * Math.PI/180;
+    mesh.rotation.z += r_z * Math.PI/180;
+    return mesh;
 }
 
-
-function addConnector(obj, x, y, z){
-    'use strict';
-
-    var mesh1 = createCylinder(robotSizes.connector, redBasicMaterial);
-    mesh1.position.set(x, y, z);
-    obj.add(mesh1);
+function createCube(size, material){
+    'use strict'
+    var {x, y, z} = size;
+    var geometry = new THREE.CubeGeometry(x, y, z);
+    var mesh = new THREE.Mesh(geometry, material);
+    return mesh;
 }
+
+function createCylinder(size, material){
+    'use strict'
+    var {x, y, z} = size;
+    var geometry = new THREE.CylinderGeometry(x, y, z);
+    var mesh = new THREE.Mesh(geometry, material);
+    return mesh;
+}
+
+/* -------------------------------------------------- */
+/*                      TRAILER                       */
+/* -------------------------------------------------- */
 
 class Trailer extends THREE.Object3D {
     constructor(x, y, z, boundingBox) {
         super();
         this.bounding_box = boundingBox;
-        createTrailer(this, x, y, z);
+        this.createTrailer(x, y, z);
+    }
+
+    createTrailer(x,y,z){
+        var leftBackWheel = createMesh('cylinder', sizes.wheel, black, -3.25, -5, -8.5, 0, 0, 90);
+        var rightBackWheel = createMesh('cylinder', sizes.wheel, black, 3.25, -5, -8.5, 0, 0, 90);
+        var leftFrontWheel = createMesh('cylinder', sizes.wheel, black, -3.25, -5, -6, 0, 0, 90);
+        var rightFrontWheel = createMesh('cylinder', sizes.wheel, black, 3.25, -5, -6, 0, 0, 90);
+        var connector = createMesh('cylinder', sizes.connector, red, 0, -4.5, 8.5);
+        var container = createMesh('cube', sizes.container, grey, 0, 0, 0);
+    
+        this.add(leftBackWheel);
+        this.add(rightBackWheel);
+        this.add(leftFrontWheel);
+        this.add(rightFrontWheel);
+        this.add(connector);
+        this.add(container);
+        this.position.set(x,y,z);
     }
 
     moveX(x){
@@ -341,18 +378,6 @@ class Trailer extends THREE.Object3D {
     }
 }
 
-function createTrailer(obj ,x, y, z){
-    'use strict';
-
-  
-    addWheel(obj, -3.25, -5, -8.5);
-    addWheel(obj, 3.25, -5, -8.5);
-    addWheel(obj, -3.25, -5, -6);
-    addWheel(obj, 3.25, -5, -6);
-    addConnector(obj, 0, -4.5, 8.5);
-    addContainer(obj, 0, 0, 0);
-    obj.position.set(x,y,z);
-}
 
 /* -------------------------------------------------- */
 /*                      ROBOT                         */
@@ -371,36 +396,30 @@ class BodyGroup extends THREE.Object3D{
     }
 }
 
+
 class Robot extends THREE.Object3D{
-    constructor(x , y, z, boundingBox){
+    constructor(x,y,z, boundingBox){
         super();
-        this.chestGroup = new BodyGroup();
-        this.leftUpperLimbsGroup = new BodyGroup();
-        this.rightUpperLimbsGroup = new BodyGroup();
-        this.headGroup = new BodyGroup();
-        this.leftLowerLimbsGroup = new BodyGroup();
-        this.rightLowerLimbsGroup = new BodyGroup();
-        this.leftFootGroup = new BodyGroup();
-        this.rightFootGroup = new BodyGroup();
+        this.headGroup = this.createHeadGroup();
+        this.upperLimbsGroup = this.createUpperLimbs();
+        this.lowerLimbsGroup = this.createLowerLimbs();
+        this.waist = this.createWaist();
+        this.abdomen = this.createAbdomen();
+        this.chest = this.createChest(x,y,z);
         this.bounding_box = boundingBox;
-        this.add(this.chestGroup);
-        createRobot(this, x, y, z);
     }
 
     rotateFeet(degrees){
         if(0<= freedomDegrees.v1 + degrees && freedomDegrees.v1 + degrees <= 180){
             freedomDegrees.v1 += degrees;
-            this.leftFootGroup.rotate(degrees);
-            this.rightFootGroup.rotate(degrees);
+            this.lowerLimbsGroup.children[2].rotate(degrees);
         }
-        
     }
 
     rotateLowerLimbs(degrees){
         if(0<= freedomDegrees.v2 + degrees && freedomDegrees.v2 + degrees <= 90){
             freedomDegrees.v2 += degrees;
-            this.leftLowerLimbsGroup.rotate(degrees);
-            this.rightLowerLimbsGroup.rotate(degrees);
+            this.lowerLimbsGroup.rotate(degrees);
         }
     }
 
@@ -409,299 +428,252 @@ class Robot extends THREE.Object3D{
             freedomDegrees.v3 += degrees;
             this.headGroup.rotate(degrees)
         }
-        
     }
 
     moveUpperLimbs(units){
-        if(0 <= freedomDegrees.delta1 + units &&  freedomDegrees.delta1 + units <= robotSizes.arm.x){
+        if(0 <= freedomDegrees.delta1 + units &&  freedomDegrees.delta1 + units <= sizes.arm.x){
             freedomDegrees.delta1 += units;
-            this.leftUpperLimbsGroup.move(units,0,0);
-            this.rightUpperLimbsGroup.move(-units,0,0);
+            this.upperLimbsGroup.children[0].move(units,0,0);
+            this.upperLimbsGroup.children[1].move(-units,0,0);
         }
     }
-}
 
-
-function createRobot(obj, x, y, z){
-    'use strict'
-    addChest(obj, x, y, z);
-    addUpperLimbs(
-        obj,
-        -(robotSizes.chest.x+robotSizes.arm.x)/2,
-        0,
-        -(robotSizes.chest.z+robotSizes.arm.z)/2
-    );
-    addUpperLimbs(
-        obj,
-        (robotSizes.chest.x+robotSizes.arm.x)/2,
-        0,
-        -(robotSizes.chest.z+robotSizes.arm.z)/2
-    );
-    addHead(
-        obj,
-        0,
-        robotSizes.chest.y/2,
-        -robotSizes.chest.z/2
-    );
-    var abdomen = addAbdomen(obj, 0, -(robotSizes.chest.y+robotSizes.abdomen.y)/2,0);
-    var waist = addWaist(abdomen, 0, -(robotSizes.abdomen.y+robotSizes.waist.y)/2,0);
-    addLowerLimbs(
-        waist,
-        obj,
-        (robotSizes.thigh.x-robotSizes.abdomen.x)/2,
-        0,
-        -robotSizes.waist.y
-    );
-    addLowerLimbs(
-        waist,
-        obj,
-        -(robotSizes.thigh.x-robotSizes.abdomen.x)/2,
-        0,
-        -robotSizes.waist.y
-    )
-}
-
-function addChest(obj , x, y, z){
-    'use strict'
-    obj.chestGroup.add(createCube(robotSizes.chest,redBasicMaterial))
-    obj.chestGroup.move(x,y,z);
-}
-
-function addUpperLimbs(obj, x, y, z){
-    'use strict'
-    if(x > 0) {
-        var pipeSignalX = 1;
-        var upperLimbs = obj.rightUpperLimbsGroup;
+    createHeadGroup(){
+        'use strict'
+        var headGroup = new BodyGroup();
+        
+        var head = createMesh('cube', sizes.head, blue,
+            0,
+            sizes.head.y/2, 
+            sizes.head.z/2
+        );
+        var leftAntenna = createMesh('cube', sizes.antenna, black,
+            -(sizes.head.x+sizes.antenna.x)/2,
+            sizes.antenna.y/2,
+            (sizes.antenna.z-sizes.head.z)/2
+        );
+        var rightAntenna = createMesh('cube', sizes.antenna, black,
+            (sizes.head.x+sizes.antenna.x)/2,
+            sizes.antenna.y/2,
+            (sizes.antenna.z-sizes.head.z)/2
+        );
+        var leftEye = createMesh('cylinder', sizes.eye, black,
+            -sizes.head.x/4,
+            sizes.head.y/4,
+            sizes.head.z/2,
+            90
+        );
+        var rightEye = createMesh('cylinder', sizes.eye, black,
+            sizes.head.x/4,
+            sizes.head.y/4,
+            sizes.head.z/2,
+            90
+        );
+        
+        head.add(leftAntenna);
+        head.add(rightAntenna);
+        head.add(leftEye);
+        head.add(rightEye);
+        headGroup.add(head);
+        headGroup.move(0, sizes.chest.y/2, -sizes.chest.z/2);
+        
+        return headGroup;
     }
-    else{
-        var pipeSignalX = -1;
-        var upperLimbs = obj.leftUpperLimbsGroup;
+
+    createChest(x, y, z){
+        var chest = createMesh('cube', sizes.chest, red, x, y, z);
+        
+        chest.add(this.headGroup);
+        chest.add(this.upperLimbsGroup);
+        chest.add(this.abdomen);
+        this.add(chest);
+        
+        return chest;
     }
-    upperLimbs.move(x - pipeSignalX*freedomDegrees.delta1,y,z);
-    addArm(upperLimbs,0,0,0);
-    addForearm(
-        upperLimbs,
-        0,
-        -(robotSizes.arm.y+robotSizes.forearm.y)/2, 
-        (robotSizes.forearm.z-robotSizes.arm.z)/2
-    );
-    addPipe(
-        upperLimbs,
-        pipeSignalX*(robotSizes.arm.x+robotSizes.pipe.x)/2,
-        robotSizes.arm.y/2,
-        (robotSizes.pipe.z-robotSizes.arm.z)/2
-    );
-    obj.add(upperLimbs);
-}
 
+    createUpperLimb(side){
+        var upperLimbGroup = new BodyGroup();
+        var signal;
+        
+        switch (side){
+            case 'left':
+                signal = -1;
+                break;
+            case 'right':
+                signal = 1;
+                break;
+        }
+        
+        var arm = createMesh('cube', sizes.arm, red, 
+            signal*(sizes.chest.x+sizes.arm.x)/2,
+            0,
+            -(sizes.chest.z+sizes.arm.z)/2
+        );
+        var forearm = createMesh('cube', sizes.forearm, blue, 
+            0,
+            -(sizes.arm.y+sizes.forearm.y)/2, 
+            (sizes.forearm.z-sizes.arm.z)/2
+        );
+        var pipe = createMesh('cube', sizes.pipe, grey,
+            signal*(sizes.arm.x+sizes.pipe.x)/2,
+            sizes.arm.y/2,
+            (sizes.pipe.z-sizes.arm.z)/2
+        );
 
-function addHead(obj, x, y, z){
-    'use strict'
-    var headCube = createCube(robotSizes.head, blueBasicMaterial);
-    headCube.position.set(
-        0,
-        robotSizes.head.y/2,
-        robotSizes.head.z/2,
-    );    
-    obj.headGroup.add(headCube);
-    addAntenna(
-        headCube,
-        -(robotSizes.head.x+robotSizes.antenna.x)/2,
-        robotSizes.antenna.y/2,
-        (robotSizes.antenna.z-robotSizes.head.z)/2
-    );
-    addAntenna(
-        headCube,
-        (robotSizes.head.x+robotSizes.antenna.x)/2,
-        robotSizes.antenna.y/2,
-        (robotSizes.antenna.z-robotSizes.head.z)/2
-    );
-    addEye(
-        headCube,
-        -robotSizes.head.x/4,
-        robotSizes.head.y/4,
-        robotSizes.head.z/2
-    );
-    addEye(
-        headCube,
-        robotSizes.head.x/4,
-        robotSizes.head.y/4,
-        robotSizes.head.z/2
-    );
+        arm.add(forearm);
+        arm.add(pipe);
+        upperLimbGroup.add(arm);
+        
+        return upperLimbGroup;
+    }
+
+    createUpperLimbs(){
+        var upperLimbsGroup = new BodyGroup();
+        var leftUpperLimbGroup = this.createUpperLimb('left');
+        var rightUpperLimbGroup = this.createUpperLimb('right');
+        
+        upperLimbsGroup.add(leftUpperLimbGroup);
+        upperLimbsGroup.add(rightUpperLimbGroup);
+        
+        return upperLimbsGroup;
+    }
+
+    createAbdomen(){
+        var abdomen = createMesh('cube', sizes.abdomen, red,
+            0,
+             -(sizes.chest.y+sizes.abdomen.y)/2,
+            0
+        );
+        
+        abdomen.add(this.waist);
+        
+        return abdomen;
+
+    }
+    createWaist(){
+        var waist = createMesh('cube', sizes.waist, grey, 
+            0,
+             -(sizes.abdomen.y+sizes.waist.y)/2,
+             0 
+        );
+        var leftWheel = createMesh('cylinder', sizes.wheel, black,
+            -(sizes.waist.x+sizes.wheel.z)/2,
+            (sizes.wheel.x-sizes.waist.y)/2,
+            (sizes.wheel.y*2-sizes.waist.z)/2,
+            0,
+            0,
+            90
+        );
+        var rightWheel = createMesh('cylinder', sizes.wheel, black,
+            (sizes.waist.x+sizes.wheel.z)/2,
+            (sizes.wheel.x-sizes.waist.y)/2,
+            (sizes.wheel.y*2-sizes.waist.z)/2,
+            0, 
+            0,
+            90
+        );
+
+        waist.add(leftWheel);
+        waist.add(rightWheel);
+        waist.add(this.lowerLimbsGroup);
+        return waist;
+
+    }
+
+    createFoot(side){
+        var signal;
+        switch (side){
+            case 'left':
+                signal = -1;
+                break;
+            case 'right':
+                signal = 1;
+                break;
+        }
+        var foot = createMesh('cube', sizes.foot, blue,
+            signal*(sizes.abdomen.x-sizes.thigh.x)/2,
+            sizes.foot.y/2,
+            sizes.foot.z/2
+        );
+        return foot;
+    }
+
+    createLowerLimb(side){
+        var signal;
+        switch (side){
+            case 'left':
+                signal = -1;
+                break;
+            case 'right':
+                signal = 1;
+                break;
+        }
+
+        var thigh = createMesh('cube', sizes.thigh, grey,
+            signal*(sizes.abdomen.x-sizes.thigh.x)/2,
+            -(sizes.waist.y+sizes.thigh.y)/2,
+            (sizes.thigh.z-sizes.waist.y)/2
+        );
+        
+        var leg = createMesh('cube', sizes.leg, blue,
+            0,
+            -(sizes.thigh.y+sizes.leg.y)/2,
+            (sizes.leg.z-sizes.thigh.z)/2
+        );
+
+        var lowerWheel = createMesh('cylinder', sizes.wheel, black,
+            signal*(sizes.wheel.z+sizes.leg.x)/2,
+            (2*sizes.wheel.x-sizes.leg.y)/2,
+            (2*sizes.wheel.y-sizes.leg.z)/2,
+            0,
+            0,
+            90
+        );
+        var upperWheel = createMesh('cylinder', sizes.wheel, black,
+            signal*(sizes.wheel.z+sizes.leg.x)/2,
+            (2*sizes.wheel.x-sizes.leg.y)/2 +3,
+            (2*sizes.wheel.y-sizes.leg.z)/2,
+            0,
+            0,
+            90
+        );
+
+        thigh.add(leg);
+        leg.add(lowerWheel);
+        leg.add(upperWheel);
+
+        return thigh;
+    }
     
-    obj.headGroup.rotate(freedomDegrees.v3);
-    obj.headGroup.move(x,y,z);
-    obj.chestGroup.add(obj.headGroup);
-}
+    createLowerLimbs(){
+        var lowerLimbsGroup = new BodyGroup();
+        var feetGroup = new BodyGroup();
 
-function addAbdomen(obj, x, y, z){
-    'use strict'
-    var abdomen = createCube(robotSizes.abdomen, redBasicMaterial);
-    abdomen.position.set(x,y,z);
-    obj.chestGroup.add(abdomen);
-    return abdomen;
-}
+        var leftLowerLimb = this.createLowerLimb('left');
+        var rightLowerLimb = this.createLowerLimb('right');
+        
+        var leftFoot = this.createFoot('left');
+        var rightFoot = this.createFoot('right');
 
-function addFoot(obj, footGroup, x, y, z){
-    'use strict'
-    var footCube = createCube(robotSizes.foot, blueBasicMaterial);
-    footCube.position.set(0,robotSizes.foot.y/2,robotSizes.foot.z/2);
-    footGroup.add(footCube);
-    footGroup.rotate(freedomDegrees.v1);
-    footGroup.move(x,y,z);
-    obj.add(footGroup);
-
-}
+        feetGroup.add(leftFoot);
+        feetGroup.add(rightFoot);
 
 
-function addLowerLimbs(obj, robotObj, x, y, z){
-    'use strict'
-    if(x>0){
-        var wheelSignalX = 1;
-        var lowerLimbs = robotObj.rightLowerLimbsGroup;
-        var footGroup = robotObj.rightFootGroup;
+        feetGroup.rotate(0);
+        feetGroup.move(
+           0,
+            -(sizes.waist.y+2*sizes.thigh.y+2*sizes.leg.y)/2,
+            (sizes.leg.z-sizes.waist.y+sizes.leg.z)/2
+        );
+        lowerLimbsGroup.move(0,0,-sizes.waist.y);
+        
+        lowerLimbsGroup.add(leftLowerLimb);
+        lowerLimbsGroup.add(rightLowerLimb);
+        lowerLimbsGroup.add(feetGroup);
+        
+        return lowerLimbsGroup;
+
     }
-    else{
-        var wheelSignalX = -1;
-        var lowerLimbs = robotObj.leftLowerLimbsGroup;
-        var footGroup = robotObj.leftFootGroup;
-    }
-    var thigh = addThigh(
-        lowerLimbs,
-        0,
-        -robotSizes.waist.y/2-robotSizes.thigh.y/2,
-        (robotSizes.thigh.z-robotSizes.waist.y)/2
-    );
-    var leg = addLeg(
-        thigh,
-        0,
-        -(robotSizes.thigh.y+robotSizes.leg.y)/2,
-        (robotSizes.leg.z-robotSizes.thigh.z)/2
-    );
-    addFoot(
-        leg,
-        footGroup,
-        0,
-        -robotSizes.leg.y/2,
-        robotSizes.leg.z/2
-    );
-    addWheel(
-        leg,
-        wheelSignalX*(robotSizes.wheel.z+robotSizes.leg.x)/2,
-        (2*robotSizes.wheel.x-robotSizes.leg.y)/2,
-        (2*robotSizes.wheel.y-robotSizes.leg.z)/2
-    );
-    addWheel(
-        leg,
-        wheelSignalX*(robotSizes.wheel.z+robotSizes.leg.x)/2,
-        (2*robotSizes.wheel.x-robotSizes.leg.y)/2 + 3,
-        (2*robotSizes.wheel.y-robotSizes.leg.z)/2
-    );
-
-    lowerLimbs.rotate(freedomDegrees.v2);
-    lowerLimbs.move(x,y,z);
-    obj.add(lowerLimbs);
-}
-
-
-function createCube(size, material){
-    'use strict'
-    var {x, y, z} = size;
-    var geometry = new THREE.CubeGeometry(x, y, z);
-    var mesh = new THREE.Mesh(geometry, material);
-    return mesh;
-}
-
-function createCylinder(size, material){
-    'use strict'
-    var {x, y, z} = size;
-    var geometry = new THREE.CylinderGeometry(x, y, z);
-    var mesh = new THREE.Mesh(geometry, material);
-    return mesh;
-}
-
-
-function addArm(obj, x, y, z){
-    'use strict'
-    var arm = createCube(robotSizes.arm, redBasicMaterial);
-    arm.position.set(x,y,z);
-    obj.add(arm);
-}
-
-
-function addForearm(obj, x, y, z){
-    'use strict'
-    var forearm = createCube(robotSizes.forearm, blueBasicMaterial);
-    forearm.position.set(x,y,z);
-    obj.add(forearm);
-}
-
-function addPipe(obj, x, y, z){
-    'use strict'
-    var pipe = createCube(robotSizes.pipe, greyBasicMaterial);
-    pipe.position.set(x,y,z);
-    obj.add(pipe);
-}
-
-
-
-function addAntenna(obj, x, y, z){
-    'use strict'
-    var antenna = createCube(robotSizes.antenna, blackBasicMaterial);
-    antenna.position.set(x,y,z);
-    obj.add(antenna);
-}
-
-function addEye(obj, x, y, z){
-    'use strict'
-    var eye = createCylinder(robotSizes.eye, blackBasicMaterial);
-    eye.rotation.x += 90 * Math.PI/180;
-    eye.position.set(x,y,z);
-    
-    obj.add(eye);
-}
-
-function addWaist(obj, x, y, z){
-    'use strict'
-
-    var waist = createCube(robotSizes.waist, greyBasicMaterial);
-    waist.position.set(x,y,z);
-    obj.add(waist);
-    addWheel(
-        waist,
-        -(robotSizes.waist.x+robotSizes.wheel.z)/2,
-        (robotSizes.wheel.x-robotSizes.waist.y)/2,
-        (robotSizes.wheel.y*2-robotSizes.waist.z)/2
-    );
-    addWheel(
-        waist,
-        (robotSizes.waist.x+robotSizes.wheel.z)/2,
-        (robotSizes.wheel.x-robotSizes.waist.y)/2,
-        (robotSizes.wheel.y*2-robotSizes.waist.z)/2
-    );
-    return waist;
-}
-
-function addWheel(obj, x, y, z){
-    'use strict'
-    var wheel = createCylinder(robotSizes.wheel, blackBasicMaterial);
-    wheel.rotation.z += 90 * Math.PI/180;
-    wheel.position.set(x,y,z);
-    obj.add(wheel);
-}
-
-function addThigh(obj, x, y, z){
-    var thigh = createCube(robotSizes.thigh, greyBasicMaterial);
-    thigh.position.set(x,y,z)
-    obj.add(thigh);
-    return thigh;
-}
-
-function addLeg(obj, x, y, z){
-    var leg = createCube(robotSizes.leg, blueBasicMaterial);
-    leg.position.set(x,y,z);
-    obj.add(leg);
-    return leg;
 }
 
 ////////////////////////
@@ -797,7 +769,7 @@ class BoundingBox {
 //////////////////////
 function checkCollisions(){
     'use strict';
-    return robot.bounding_box.intersect(trailer.bounding_box);
+    //return robot.bounding_box.intersect(trailer.bounding_box);
 }
 
 ///////////////////////
