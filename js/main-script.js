@@ -21,7 +21,7 @@ const KEY_3 = "51";
 const KEY_4 = "52";
 const KEY_5 = "53";
 
-const TRAILER_MOVE_UNIT = 1;
+const TRAILER_MOVE_UNIT = 50;
 const ROBOT_ROTATION_DEGREES = 50;
 const ROBOT_MOVE_UNIT = 2;
 
@@ -32,27 +32,27 @@ const FINAL_POS_Z = -17;
 const ANIMATION_STEP = 0.1;
 
 const keyHandlers = {
-    [ARROW_LEFT]: () => {
-        trailer.moveX(-TRAILER_MOVE_UNIT);
+    [ARROW_LEFT]: (deltaTime) => {
+        trailer.moveX(-TRAILER_MOVE_UNIT*deltaTime);
         
     },
-    [ARROW_UP]: () => {
-        trailer.moveZ(-TRAILER_MOVE_UNIT);
+    [ARROW_UP]: (deltatime) => {
+        trailer.moveZ(-TRAILER_MOVE_UNIT*deltatime);
     },
-    [ARROW_RIGHT]: () => {
-        trailer.moveX(TRAILER_MOVE_UNIT);
+    [ARROW_RIGHT]: (deltaTime) => {
+        trailer.moveX(TRAILER_MOVE_UNIT*deltaTime);
     },
-    [ARROW_DOWN]: () => {
-        trailer.moveZ(TRAILER_MOVE_UNIT);
+    [ARROW_DOWN]: (deltaTime) => {
+        trailer.moveZ(TRAILER_MOVE_UNIT*deltaTime);
     },
-    [KEY_Q]: () => robot.rotateFeet(2*ROBOT_ROTATION_DEGREES),
-    [KEY_A]: () => robot.rotateFeet(-2*ROBOT_ROTATION_DEGREES),
-    [KEY_W]: () => robot.rotateLowerLimbs(ROBOT_ROTATION_DEGREES),
-    [KEY_S]: () => robot.rotateLowerLimbs(-ROBOT_ROTATION_DEGREES),
-    [KEY_E]: () => robot.moveUpperLimbs(ROBOT_MOVE_UNIT),
-    [KEY_D]: () => robot.moveUpperLimbs(-ROBOT_MOVE_UNIT),
-    [KEY_R]: () => robot.rotateHead(-2*ROBOT_ROTATION_DEGREES),
-    [KEY_F]: () => robot.rotateHead(2*ROBOT_ROTATION_DEGREES),
+    [KEY_Q]: (deltatime) => robot.rotateFeet(2*ROBOT_ROTATION_DEGREES*deltatime),
+    [KEY_A]: (deltaTime) => robot.rotateFeet(-2*ROBOT_ROTATION_DEGREES*deltaTime),
+    [KEY_W]: (deltaTime) => robot.rotateLowerLimbs(ROBOT_ROTATION_DEGREES*deltaTime),
+    [KEY_S]: (deltaTime) => robot.rotateLowerLimbs(-ROBOT_ROTATION_DEGREES*deltaTime),
+    [KEY_E]: (deltaTime) => robot.moveUpperLimbs(ROBOT_MOVE_UNIT*deltaTime),
+    [KEY_D]: (deltaTime) => robot.moveUpperLimbs(-ROBOT_MOVE_UNIT*deltaTime),
+    [KEY_R]: (deltaTime) => robot.rotateHead(-2*ROBOT_ROTATION_DEGREES*deltaTime),
+    [KEY_F]: (deltaTime) => robot.rotateHead(2*ROBOT_ROTATION_DEGREES*deltaTime),
     [KEY_1]: () => { activeCamera = cameras.front; keyCodes[KEY_1] = false;is_orthographic=true;},
     [KEY_2]: () => { activeCamera = cameras.side; keyCodes[KEY_2] = false; is_orthographic=true;},
     [KEY_3]: () => { activeCamera = cameras.top; keyCodes[KEY_3] = false; is_orthographic=true;},
@@ -146,9 +146,9 @@ var sizes = {
         z:2,
     },
     pipe:{
-        x:0.25,
-        y:3,
-        z:0.25,
+        x:0.125,
+        y:0.125,
+        z:3,
     }
 }
 
@@ -158,6 +158,7 @@ var sizes = {
 //////////////////////
 
 var  scene, renderer,camera;
+var clock = new THREE.Clock();
 var cameras = {};
 var activeCamera;
 var trailer, robot;
@@ -210,9 +211,8 @@ function createFrontCamera() {
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    cameras.front.position.x = 0;
-    cameras.front.position.y = 0;
-    cameras.front.position.z = 50;
+    
+    cameras.front.position.set(0, 0, 50);                                      
     cameras.front.lookAt(scene.position);
     activeCamera = cameras.front;
 }
@@ -225,9 +225,8 @@ function createSideCamera() {
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    cameras.side.position.x = 50;
-    cameras.side.position.y = 0;
-    cameras.side.position.z = 0;
+    
+    cameras.side.position.set(50, 0, 0);
     cameras.side.lookAt(scene.position);
 }
 
@@ -239,9 +238,7 @@ function createTopCamera() {
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    cameras.top.position.x = 0;
-    cameras.top.position.y = 50;
-    cameras.top.position.z = 0;
+    cameras.top.position.set(0, 50, 0);
     cameras.top.lookAt(scene.position);
 }
 
@@ -254,9 +251,7 @@ function createIsometricOrtographicCamera() {
                                             window.innerHeight / -40,
                                             0.1,
                                             1000);
-    cameras.ortographic.position.x = 50;
-    cameras.ortographic.position.y = 50;
-    cameras.ortographic.position.z = 50;
+    cameras.ortographic.position.set(50, 50, 50);
     cameras.ortographic.lookAt(scene.position);
 }
 
@@ -266,9 +261,7 @@ function createIsometricPerspectiveCamera() {
                                          window.innerWidth / window.innerHeight,
                                          1,
                                          1000);
-    cameras.perspective.position.x = 50;
-    cameras.perspective.position.y = 50;
-    cameras.perspective.position.z = 50;
+    cameras.perspective.position.set(50, 50, 50);
     cameras.perspective.lookAt(scene.position);
 }
 
@@ -406,32 +399,74 @@ class Robot extends THREE.Object3D{
     }
 
     rotateFeet(degrees){
-        if(0<= freedomDegrees.v1 + degrees && freedomDegrees.v1 + degrees <= 180){
+        if(0 > freedomDegrees.v1 + degrees){
+            this.lowerLimbsGroup.children[2].rotate(-freedomDegrees.v1); 
+            freedomDegrees.v1 = 0;   
+        }
+        else if (freedomDegrees.v1 + degrees > 180){
+            this.lowerLimbsGroup.children[2].rotate(180 - freedomDegrees.v1);
+            freedomDegrees.v1 = 180;
+        }
+        else{
             freedomDegrees.v1 += degrees;
             this.lowerLimbsGroup.children[2].rotate(degrees);
         }
     }
 
     rotateLowerLimbs(degrees){
-        if(0<= freedomDegrees.v2 + degrees && freedomDegrees.v2 + degrees <= 90){
+        if(0 > freedomDegrees.v2 + degrees){
+            this.lowerLimbsGroup.rotate(-freedomDegrees.v2);
+            freedomDegrees.v2 = 0;
+        }
+        else if (freedomDegrees.v2 + degrees > 90){
+            this.lowerLimbsGroup.rotate(90 - freedomDegrees.v2);
+            freedomDegrees.v2 = 90;
+        }
+        else{
             freedomDegrees.v2 += degrees;
             this.lowerLimbsGroup.rotate(degrees);
         }
     }
 
+
     rotateHead(degrees){
-        if(-180 <= freedomDegrees.v3 + degrees && freedomDegrees.v3 + degrees <= 0){
+        if (-180 > freedomDegrees.v3 + degrees){
+            this.headGroup.rotate(-180 - freedomDegrees.v3);
+            freedomDegrees.v3 = -180;
+        }
+        else if (freedomDegrees.v3 + degrees > 0){
+            this.headGroup.rotate(0 - freedomDegrees.v3);
+            freedomDegrees.v3 = 0;
+        }
+        else{
             freedomDegrees.v3 += degrees;
             this.headGroup.rotate(degrees)
         }
     }
 
     moveUpperLimbs(units){
-        if(0 <= freedomDegrees.delta1 + units &&  freedomDegrees.delta1 + units <= sizes.arm.x){
+        if (0 > freedomDegrees.delta1 + units){
+            this.upperLimbsGroup.children[0].move(-freedomDegrees.delta1, 0, 0);
+            this.upperLimbsGroup.children[1].move(-freedomDegrees.delta1, 0, 0);
+            freedomDegrees.delta1 = 0;
+        }
+        else if (freedomDegrees.delta1 + units > sizes.arm.x){
+            this.upperLimbsGroup.children[0].move(sizes.arm.x - freedomDegrees.delta1, 0 , 0);
+            this.upperLimbsGroup.children[1].move(sizes.arm.x - freedomDegrees.delta1, 0 , 0);
+            freedomDegrees.delta1 = sizes.arm.x;
+        }
+        else{
             freedomDegrees.delta1 += units;
             this.upperLimbsGroup.children[0].move(units,0,0);
             this.upperLimbsGroup.children[1].move(-units,0,0);
         }
+    }
+
+    isTruck(){
+        return freedomDegrees.v1 == 180 && 
+            freedomDegrees.v2 == 90 && 
+            freedomDegrees.v3 == -180 &&
+            freedomDegrees.delta1 == sizes.arm.x; 
     }
 
     createHeadGroup(){
@@ -509,10 +544,10 @@ class Robot extends THREE.Object3D{
             -(sizes.arm.y+sizes.forearm.y)/2, 
             (sizes.forearm.z-sizes.arm.z)/2
         );
-        var pipe = createMesh('cube', sizes.pipe, grey,
-            signal*(sizes.arm.x+sizes.pipe.x)/2,
-            sizes.arm.y/2,
-            (sizes.pipe.z-sizes.arm.z)/2
+        var pipe = createMesh('cylinder', sizes.pipe, grey,
+            signal*(sizes.arm.x+2*sizes.pipe.x)/2,
+            sizes.arm.z/2,
+            (2*sizes.pipe.y-sizes.arm.z)/2
         );
 
         arm.add(forearm);
@@ -674,14 +709,14 @@ class Robot extends THREE.Object3D{
         // var xMin = x - sizes.chest.x/2 - sizes.arm.x - sizes.pipe.x;
         // var xMax = x + sizes.chest.x/2 + sizes.arm.x + sizes.pipe.x;
 
-        var xMin = x - sizes.chest.x/2 - sizes.pipe.x;
-        var xMax = x + sizes.chest.x/2 + sizes.pipe.x;
+        var xMin = x - sizes.chest.x/2 - 2*sizes.pipe.x;
+        var xMax = x + sizes.chest.x/2 + 2*sizes.pipe.x;
 
         // var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - sizes.waist.y - sizes.thigh.y - sizes.leg.y;
         // var yMax = y + sizes.chest.y/2 + sizes.head.y/2 + sizes.antenna.y    
         
         var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - 2*sizes.wheel.y
-        var yMax = y + sizes.chest.y/2 + sizes.pipe.y/2;
+        var yMax = y + sizes.chest.y/2 + sizes.pipe.z/2;
 
         // var zMin = z - sizes.chest.z/2 - sizes.arm.z;
         // var zMax = z + sizes.chest.z/2
@@ -887,9 +922,12 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
+
+    var deltaTime = clock.getDelta();
+   
     for (const key in keyCodes) {
         if (keyCodes[key] && keyHandlers[key]) {
-            keyHandlers[key]();
+            keyHandlers[key](deltaTime);
         }
     }
     
