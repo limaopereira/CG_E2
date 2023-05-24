@@ -25,12 +25,6 @@ const TRAILER_MOVE_UNIT = 50;
 const ROBOT_ROTATION_DEGREES = 50;
 const ROBOT_MOVE_UNIT = 2;
 
-//Animation Constants
-
-const FINAL_POS_X = 0;
-const FINAL_POS_Z = -17;
-const ANIMATION_STEP = 0.1;
-
 const keyHandlers = {
     [ARROW_LEFT]: (deltaTime) => {
         trailer.moveX(-TRAILER_MOVE_UNIT*deltaTime);
@@ -152,18 +146,27 @@ var sizes = {
     }
 }
 
+const FINAL_POS_X = 0;
+const FINAL_POS_ANIM_Z = -17;
+const FINAL_POS_Z = FINAL_POS_ANIM_Z - sizes.container.z/2;
+const ANIMATION_STEP = 50;
+
 
 //////////////////////
 /* GLOBAL VARIABLES */
 //////////////////////
 
-var  scene, renderer,camera;
+var scene, renderer,camera;
 var clock = new THREE.Clock();
 var cameras = {};
 var activeCamera;
 var trailer, robot;
 var keyCodes = {};
-var in_animation = false;
+
+var inAnimation = false;
+var outAnimation = false;
+var allowCollision = false;
+//var in_animation = false;
 var after_animation= false;
 var is_orthographic = true;
 
@@ -325,13 +328,27 @@ class Trailer extends THREE.Object3D {
     }
 
     moveX(x){
-        trailer.position.x += x;
         trailer.boundingBox.x_add(x);
+        if(checkCollision()){
+            trailer.boundingBox.x_add(-x);
+            return false;
+        }
+        else{
+            trailer.position.x += x;
+            return true;
+        }
     }
 
     moveZ(z){
-        trailer.position.z += z;
         trailer.boundingBox.z_add(z);
+        if(checkCollision()){
+            trailer.boundingBox.z_add(-z); 
+            return false;
+        }
+        else{
+            trailer.position.z += z;
+            return true;
+        }       
     }
 
     createTrailer(x,y,z){
@@ -725,7 +742,6 @@ class Robot extends THREE.Object3D{
         var zMax = z + sizes.chest.z/2;
 
         var boundingBox = new BoundingBox(xMin, xMax, yMin, yMax, zMin, zMax);
-        console.log(boundingBox);
         return boundingBox;
     }
 }
@@ -802,84 +818,147 @@ class BoundingBox {
 //////////////////////
 /* CHECK COLLISIONS */
 //////////////////////
-function checkCollisions(){
-    'use strict';
 
-    if(robot.boundingBox.intersect(trailer.boundingBox) ){
-        if(!after_animation){
-            return true;
-        }else{
-            return false;
+function checkCollision(){
+    if (robot.boundingBox.intersect(trailer.boundingBox) && robot.isTruck() && !allowCollision){
+        if(!inAnimation && !allowCollision){
+            inAnimation = true;
         }
-    }else if (after_animation){
-        after_animation = false;
-        return false;
-    }else{
+        return true;
+    }
+    else{
         return false;
     }
+    
 }
+
+function startAnimation(deltaTime){
+    'use strict'
+    var pos = trailer.getWorldPosition();
+
+    var delta_x = FINAL_POS_X - pos.x;
+    var delta_z = FINAL_POS_Z - pos.z;
+    var delta_final_z = FINAL_POS_ANIM_Z - pos.z;
+
+    var step_anim = ANIMATION_STEP * deltaTime;
+    var step_x = step_anim > Math.abs(delta_x) ? delta_x : Math.sign(delta_x)*step_anim;
+    var step_z = step_anim > Math.abs(delta_z) ? delta_z : Math.sign(delta_z)*step_anim;
+    var step_final_z = step_anim > Math.abs(delta_final_z) ? delta_final_z : Math.sign(delta_final_z)*step_anim;
+
+    if(step_z != 0 && !allowCollision){
+        if(!trailer.moveZ(step_z)){
+            trailer.moveX(step_anim);
+        }
+    }
+    else if (step_x != 0){
+        trailer.moveX(step_x);
+    }
+    else if(step_final_z!=0){
+        allowCollision = true;
+        trailer.moveZ(step_final_z);
+    }
+    else{
+        inAnimation = false;
+    }
+}
+
+function endAnimation(deltaTime){
+    var pos = trailer.getWorldPosition();
+    
+    var delta_z = FINAL_POS_Z - pos.z;
+
+    var step_anim = ANIMATION_STEP * deltaTime;
+    var step_z = step_anim > Math.abs(delta_z) ? delta_z : Math.sign(delta_z)*step_anim;
+
+    if(step_z != 0 ){
+        trailer.moveZ(step_z);
+    }
+    else{
+        allowCollision = false;
+        outAnimation = false;
+    }
+
+}
+
+
+// function checkCollisions(){
+//     'use strict';
+
+//     if(robot.boundingBox.intersect(trailer.boundingBox) ){
+//         if(!after_animation){
+//             return true;
+//         }else{
+//             return false;
+//         }
+//     }else if (after_animation){
+//         after_animation = false;
+//         return false;
+//     }else{
+//         return false;
+//     }
+// }
 
 ///////////////////////
 /* HANDLE COLLISIONS */
 ///////////////////////
-function handleCollisions(){
-    'use strict';
-    if(in_animation){
-        var pos = new THREE.Vector3();
-        pos = trailer.getWorldPosition();
-        activeCamera = cameras.side;
-        var delta_x;
-        var delta_z;
-        delta_x = Math.abs(FINAL_POS_X- pos.x);
-        delta_z = Math.abs(FINAL_POS_Z- pos.z);
-        if(pos.x!= FINAL_POS_X || pos.z!= FINAL_POS_Z){
-            if(pos.x> FINAL_POS_X){
-                if(delta_x < ANIMATION_STEP){
-                    trailer.moveX(- delta_x);
-                }else {
-                    trailer.moveX(- ANIMATION_STEP);
-                }
-            }else if (pos.x< FINAL_POS_X){
-                if(delta_x < ANIMATION_STEP){
-                    trailer.moveX( delta_x);
-                }else {
-                    trailer.moveX( ANIMATION_STEP);
-                }
-            }
+// function handleCollisions(){
+//     'use strict';
+//     if(in_animation){
+//         var pos = new THREE.Vector3();
+//         pos = trailer.getWorldPosition();
+//         activeCamera = cameras.side;
+//         var delta_x;
+//         var delta_z;
+//         delta_x = Math.abs(FINAL_POS_X- pos.x);
+//         delta_z = Math.abs(FINAL_POS_Z- pos.z);
+//         if(pos.x!= FINAL_POS_X || pos.z!= FINAL_POS_Z){
+//             if(pos.x> FINAL_POS_X){
+//                 if(delta_x < ANIMATION_STEP){
+//                     trailer.moveX(- delta_x);
+//                 }else {
+//                     trailer.moveX(- ANIMATION_STEP);
+//                 }
+//             }else if (pos.x< FINAL_POS_X){
+//                 if(delta_x < ANIMATION_STEP){
+//                     trailer.moveX( delta_x);
+//                 }else {
+//                     trailer.moveX( ANIMATION_STEP);
+//                 }
+//             }
 
-            if(pos.z> FINAL_POS_Z){
+//             if(pos.z> FINAL_POS_Z){
 
-                if(delta_z < ANIMATION_STEP){
-                    trailer.moveZ(- delta_z);
-                }else {
-                    trailer.moveZ(- ANIMATION_STEP);
-                }
-            }else if (pos.z< FINAL_POS_Z){
-                if(delta_z < ANIMATION_STEP){
-                    trailer.moveZ( delta_z);
-                }else {
-                    trailer.moveZ( ANIMATION_STEP);
-                }
-            }
-        }else{
-            in_animation = false;
-            after_animation = true;
-        }
-        /*
-        if(pos.x != -1 ||pos.z!= -17){
-            const smoothness = 0.05;
-            const target_position= trailer.position.clone();
-            target_position.x = -1;
-            target_position.z = -17;
-            trailer.position.lerp(target_position, smoothness);
-        }else{
-            in_animation = false;
-            after_animation = true;
-        }*/
+//                 if(delta_z < ANIMATION_STEP){
+//                     trailer.moveZ(- delta_z);
+//                 }else {
+//                     trailer.moveZ(- ANIMATION_STEP);
+//                 }
+//             }else if (pos.z< FINAL_POS_Z){
+//                 if(delta_z < ANIMATION_STEP){
+//                     trailer.moveZ( delta_z);
+//                 }else {
+//                     trailer.moveZ( ANIMATION_STEP);
+//                 }
+//             }
+//         }else{
+//             in_animation = false;
+//             after_animation = true;
+//         }
+//         /*
+//         if(pos.x != -1 ||pos.z!= -17){
+//             const smoothness = 0.05;
+//             const target_position= trailer.position.clone();
+//             target_position.x = -1;
+//             target_position.z = -17;
+//             trailer.position.lerp(target_position, smoothness);
+//         }else{
+//             in_animation = false;
+//             after_animation = true;
+//         }*/
 
-    }
+//     }
                 
-}
+// }
 
 ////////////
 /* UPDATE */
@@ -931,12 +1010,22 @@ function animate() {
         }
     }
     
-    if(checkCollisions()){
-        //handleCollisions();
-        in_animation = true;
+    if(inAnimation){
+        startAnimation(deltaTime);
     }
 
-    handleCollisions()
+    if(outAnimation){
+        endAnimation(deltaTime);
+    }
+    
+
+    // console.log(inAnimation);
+    // if(checkCollisions()){
+    //     //handleCollisions();
+    //     in_animation = true;
+    // }
+
+    // handleCollisions()
     //console.log(in_animation);
     
     //console.log(after_animation);
@@ -984,8 +1073,13 @@ function onResize() {
 ///////////////////////
 function onKeyDown(e) {
     'use strict';
-    if(!in_animation){
-        keyCodes[e.keyCode] = true;
+    if(!inAnimation){
+        if(allowCollision){
+            outAnimation = true;
+        }
+        else{
+            keyCodes[e.keyCode] = true;
+        }
     }
 }
 
