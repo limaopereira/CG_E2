@@ -21,32 +21,38 @@ const KEY_3 = "51";
 const KEY_4 = "52";
 const KEY_5 = "53";
 
-const TRAILER_MOVE_UNIT = 50;
+const TRAILER_MOVE_UNIT = 1;
 const ROBOT_ROTATION_DEGREES = 50;
 const ROBOT_MOVE_UNIT = 2;
 
+//Animation Constants
+
+const FINAL_POS_X = 0;
+const FINAL_POS_Z = -17;
+const ANIMATION_STEP = 0.1;
+
 const keyHandlers = {
-    [ARROW_LEFT]: (deltaTime) => {
-        trailer.moveX(-TRAILER_MOVE_UNIT*deltaTime);
+    [ARROW_LEFT]: () => {
+        trailer.moveX(-TRAILER_MOVE_UNIT);
         
     },
-    [ARROW_UP]: (deltaTime) => {
-        trailer.moveZ(-TRAILER_MOVE_UNIT*deltaTime);
+    [ARROW_UP]: () => {
+        trailer.moveZ(-TRAILER_MOVE_UNIT);
     },
-    [ARROW_RIGHT]: (deltaTime) => {
-        trailer.moveX(TRAILER_MOVE_UNIT*deltaTime);
+    [ARROW_RIGHT]: () => {
+        trailer.moveX(TRAILER_MOVE_UNIT);
     },
-    [ARROW_DOWN]: (deltaTime) => {
-        trailer.moveZ(TRAILER_MOVE_UNIT*deltaTime);
+    [ARROW_DOWN]: () => {
+        trailer.moveZ(TRAILER_MOVE_UNIT);
     },
-    [KEY_Q]: (deltaTime) => robot.rotateFeet(2*ROBOT_ROTATION_DEGREES*deltaTime),
-    [KEY_A]: (deltaTime) => robot.rotateFeet(-2*ROBOT_ROTATION_DEGREES*deltaTime),
-    [KEY_W]: (deltaTime) => robot.rotateLowerLimbs(ROBOT_ROTATION_DEGREES*deltaTime),
-    [KEY_S]: (deltaTime) => robot.rotateLowerLimbs(-ROBOT_ROTATION_DEGREES*deltaTime),
-    [KEY_E]: (deltaTime) => robot.moveUpperLimbs(ROBOT_MOVE_UNIT*deltaTime),
-    [KEY_D]: (deltaTime) => robot.moveUpperLimbs(-ROBOT_MOVE_UNIT*deltaTime),
-    [KEY_R]: (deltaTime) => robot.rotateHead(-2*ROBOT_ROTATION_DEGREES*deltaTime),
-    [KEY_F]: (deltaTime) => robot.rotateHead(2*ROBOT_ROTATION_DEGREES*deltaTime),
+    [KEY_Q]: () => robot.rotateFeet(2*ROBOT_ROTATION_DEGREES),
+    [KEY_A]: () => robot.rotateFeet(-2*ROBOT_ROTATION_DEGREES),
+    [KEY_W]: () => robot.rotateLowerLimbs(ROBOT_ROTATION_DEGREES),
+    [KEY_S]: () => robot.rotateLowerLimbs(-ROBOT_ROTATION_DEGREES),
+    [KEY_E]: () => robot.moveUpperLimbs(ROBOT_MOVE_UNIT),
+    [KEY_D]: () => robot.moveUpperLimbs(-ROBOT_MOVE_UNIT),
+    [KEY_R]: () => robot.rotateHead(-2*ROBOT_ROTATION_DEGREES),
+    [KEY_F]: () => robot.rotateHead(2*ROBOT_ROTATION_DEGREES),
     [KEY_1]: () => { activeCamera = cameras.front; keyCodes[KEY_1] = false;is_orthographic=true;},
     [KEY_2]: () => { activeCamera = cameras.side; keyCodes[KEY_2] = false; is_orthographic=true;},
     [KEY_3]: () => { activeCamera = cameras.top; keyCodes[KEY_3] = false; is_orthographic=true;},
@@ -140,9 +146,9 @@ var sizes = {
         z:2,
     },
     pipe:{
-        x:0.125,
-        y:0.125,
-        z:3,
+        x:0.25,
+        y:3,
+        z:0.25,
     }
 }
 
@@ -152,13 +158,12 @@ var sizes = {
 //////////////////////
 
 var  scene, renderer,camera;
-var clock = new THREE.Clock();
 var cameras = {};
 var activeCamera;
 var trailer, robot;
 var keyCodes = {};
-
 var in_animation = false;
+var after_animation= false;
 var is_orthographic = true;
 
 var freedomDegrees = {
@@ -199,61 +204,71 @@ function createCameras() {
 }
 function createFrontCamera() {
     'use strict';
-    cameras.front = new THREE.OrthographicCamera(-window.innerWidth / 40,
+    cameras.front = new THREE.OrthographicCamera(window.innerWidth /  -40,
                                             window.innerWidth/40 ,
                                             window.innerHeight / 40,
-                                            -window.innerHeight / 40,
+                                            window.innerHeight / -40,
                                             0.1,
                                             1000);
-    cameras.front.position.set(0, 0, 50);
+    cameras.front.position.x = 0;
+    cameras.front.position.y = 0;
+    cameras.front.position.z = 50;
     cameras.front.lookAt(scene.position);
     activeCamera = cameras.front;
 }
 
 function createSideCamera() {
     'use strict';
-    cameras.side = new THREE.OrthographicCamera(-window.innerWidth /  40,
+    cameras.side = new THREE.OrthographicCamera(window.innerWidth /  -40,
                                             window.innerWidth/40 ,
                                             window.innerHeight / 40,
-                                            -window.innerHeight / 40,
+                                            window.innerHeight / -40,
                                             0.1,
                                             1000);
-    cameras.side.position.set(50, 0, 0);
+    cameras.side.position.x = 50;
+    cameras.side.position.y = 0;
+    cameras.side.position.z = 0;
     cameras.side.lookAt(scene.position);
 }
 
 function createTopCamera() {
     'use strict';
-    cameras.top = new THREE.OrthographicCamera(-window.innerWidth /  40,
+    cameras.top = new THREE.OrthographicCamera(window.innerWidth /  -40,
                                             window.innerWidth/40 ,
                                             window.innerHeight / 40,
-                                            -window.innerHeight / 40,
+                                            window.innerHeight / -40,
                                             0.1,
                                             1000);
-    cameras.top.position.set(0,50,0);
+    cameras.top.position.x = 0;
+    cameras.top.position.y = 50;
+    cameras.top.position.z = 0;
     cameras.top.lookAt(scene.position);
 }
 
 function createIsometricOrtographicCamera() {
     'use strict';
     //OrthographicCamera( left : Number, right : Number, top : Number, bottom : Number, near : Number, far : Number )
-    cameras.ortographic = new THREE.OrthographicCamera(-window.innerWidth /  40,
-                                            window.innerWidth/ 40 ,
+    cameras.ortographic = new THREE.OrthographicCamera(window.innerWidth /  -40,
+                                            window.innerWidth/40 ,
                                             window.innerHeight / 40,
-                                            -window.innerHeight / 40,
+                                            window.innerHeight / -40,
                                             0.1,
                                             1000);
-    cameras.ortographic.position.set(50, 50, 50);
+    cameras.ortographic.position.x = 50;
+    cameras.ortographic.position.y = 50;
+    cameras.ortographic.position.z = 50;
     cameras.ortographic.lookAt(scene.position);
 }
 
 function createIsometricPerspectiveCamera() {
     'use strict';
-    cameras.perspective = new THREE.PerspectiveCamera(60,
+    cameras.perspective = new THREE.PerspectiveCamera(70,
                                          window.innerWidth / window.innerHeight,
                                          1,
                                          1000);
-    cameras.perspective.position.set(50,50,50);
+    cameras.perspective.position.x = 50;
+    cameras.perspective.position.y = 50;
+    cameras.perspective.position.z = 50;
     cameras.perspective.lookAt(scene.position);
 }
 
@@ -494,10 +509,10 @@ class Robot extends THREE.Object3D{
             -(sizes.arm.y+sizes.forearm.y)/2, 
             (sizes.forearm.z-sizes.arm.z)/2
         );
-        var pipe = createMesh('cylinder', sizes.pipe, grey,
-            signal*(sizes.arm.x+2*sizes.pipe.x)/2,
-            sizes.arm.z/2,
-            (2*sizes.pipe.y-sizes.arm.z)/2
+        var pipe = createMesh('cube', sizes.pipe, grey,
+            signal*(sizes.arm.x+sizes.pipe.x)/2,
+            sizes.arm.y/2,
+            (sizes.pipe.z-sizes.arm.z)/2
         );
 
         arm.add(forearm);
@@ -659,14 +674,14 @@ class Robot extends THREE.Object3D{
         // var xMin = x - sizes.chest.x/2 - sizes.arm.x - sizes.pipe.x;
         // var xMax = x + sizes.chest.x/2 + sizes.arm.x + sizes.pipe.x;
 
-        var xMin = x - sizes.chest.x/2 - 2*sizes.pipe.x;
-        var xMax = x + sizes.chest.x/2 + 2*sizes.pipe.x;
+        var xMin = x - sizes.chest.x/2 - sizes.pipe.x;
+        var xMax = x + sizes.chest.x/2 + sizes.pipe.x;
 
         // var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - sizes.waist.y - sizes.thigh.y - sizes.leg.y;
         // var yMax = y + sizes.chest.y/2 + sizes.head.y/2 + sizes.antenna.y    
         
         var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - 2*sizes.wheel.y
-        var yMax = y + sizes.chest.y/2 + sizes.pipe.z/2;
+        var yMax = y + sizes.chest.y/2 + sizes.pipe.y/2;
 
         // var zMin = z - sizes.chest.z/2 - sizes.arm.z;
         // var zMax = z + sizes.chest.z/2
@@ -754,7 +769,19 @@ class BoundingBox {
 //////////////////////
 function checkCollisions(){
     'use strict';
-    return robot.boundingBox.intersect(trailer.boundingBox);
+
+    if(robot.boundingBox.intersect(trailer.boundingBox) ){
+        if(!after_animation){
+            return true;
+        }else{
+            return false;
+        }
+    }else if (after_animation){
+        after_animation = false;
+        return false;
+    }else{
+        return false;
+    }
 }
 
 ///////////////////////
@@ -762,8 +789,61 @@ function checkCollisions(){
 ///////////////////////
 function handleCollisions(){
     'use strict';
-    console.log("COLLISION");
+    if(in_animation){
+        var pos = new THREE.Vector3();
+        pos = trailer.getWorldPosition();
+        activeCamera = cameras.side;
+        var delta_x;
+        var delta_z;
+        delta_x = Math.abs(FINAL_POS_X- pos.x);
+        delta_z = Math.abs(FINAL_POS_Z- pos.z);
+        if(pos.x!= FINAL_POS_X || pos.z!= FINAL_POS_Z){
+            if(pos.x> FINAL_POS_X){
+                if(delta_x < ANIMATION_STEP){
+                    trailer.moveX(- delta_x);
+                }else {
+                    trailer.moveX(- ANIMATION_STEP);
+                }
+            }else if (pos.x< FINAL_POS_X){
+                if(delta_x < ANIMATION_STEP){
+                    trailer.moveX( delta_x);
+                }else {
+                    trailer.moveX( ANIMATION_STEP);
+                }
+            }
 
+            if(pos.z> FINAL_POS_Z){
+
+                if(delta_z < ANIMATION_STEP){
+                    trailer.moveZ(- delta_z);
+                }else {
+                    trailer.moveZ(- ANIMATION_STEP);
+                }
+            }else if (pos.z< FINAL_POS_Z){
+                if(delta_z < ANIMATION_STEP){
+                    trailer.moveZ( delta_z);
+                }else {
+                    trailer.moveZ( ANIMATION_STEP);
+                }
+            }
+        }else{
+            in_animation = false;
+            after_animation = true;
+        }
+        /*
+        if(pos.x != -1 ||pos.z!= -17){
+            const smoothness = 0.05;
+            const target_position= trailer.position.clone();
+            target_position.x = -1;
+            target_position.z = -17;
+            trailer.position.lerp(target_position, smoothness);
+        }else{
+            in_animation = false;
+            after_animation = true;
+        }*/
+
+    }
+                
 }
 
 ////////////
@@ -791,7 +871,6 @@ function init() {
     renderer = new THREE.WebGLRenderer({
         antialias: true
     });
-
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
@@ -808,19 +887,26 @@ function init() {
 /////////////////////
 function animate() {
     'use strict';
-
-    var deltaTime = clock.getDelta();
-
     for (const key in keyCodes) {
         if (keyCodes[key] && keyHandlers[key]) {
-            keyHandlers[key](deltaTime);
+            keyHandlers[key]();
         }
     }
     
     if(checkCollisions()){
-        handleCollisions();
+        //handleCollisions();
+        in_animation = true;
     }
-   
+
+    handleCollisions()
+    //console.log(in_animation);
+    
+    //console.log(after_animation);
+
+    /*
+    var pos = new THREE.Vector3();
+    pos = trailer.getWorldPosition();
+    console.log(pos);*/
     render();
 
     requestAnimationFrame(animate);
@@ -860,7 +946,9 @@ function onResize() {
 ///////////////////////
 function onKeyDown(e) {
     'use strict';
-    keyCodes[e.keyCode] = true;
+    if(!in_animation){
+        keyCodes[e.keyCode] = true;
+    }
 }
 
 ///////////////////////
