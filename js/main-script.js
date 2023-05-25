@@ -47,11 +47,11 @@ const keyHandlers = {
     [KEY_D]: (deltaTime) => robot.moveUpperLimbs(-ROBOT_MOVE_UNIT*deltaTime),
     [KEY_R]: (deltaTime) => robot.rotateHead(-2*ROBOT_ROTATION_DEGREES*deltaTime),
     [KEY_F]: (deltaTime) => robot.rotateHead(2*ROBOT_ROTATION_DEGREES*deltaTime),
-    [KEY_1]: () => { activeCamera = cameras.front; keyCodes[KEY_1] = false;is_orthographic=true;},
-    [KEY_2]: () => { activeCamera = cameras.side; keyCodes[KEY_2] = false; is_orthographic=true;},
-    [KEY_3]: () => { activeCamera = cameras.top; keyCodes[KEY_3] = false; is_orthographic=true;},
-    [KEY_4]: () => { activeCamera = cameras.ortographic;  keyCodes[KEY_4] = false; is_orthographic=true;},
-    [KEY_5]: () => { activeCamera = cameras.perspective;  keyCodes[KEY_5] = false; is_orthographic=false;},
+    [KEY_1]: () => { activeCamera = cameras.front; keyCodes[KEY_1] = false;},
+    [KEY_2]: () => { activeCamera = cameras.side; keyCodes[KEY_2] = false;},
+    [KEY_3]: () => { activeCamera = cameras.top; keyCodes[KEY_3] = false;},
+    [KEY_4]: () => { activeCamera = cameras.ortographic;  keyCodes[KEY_4] = false;},
+    [KEY_5]: () => { activeCamera = cameras.perspective;  keyCodes[KEY_5] = false;},
     [KEY_6]: () => { 
         for(const material of materials){
             material.wireframe = !material.wireframe;
@@ -156,19 +156,15 @@ const ANIMATION_STEP = 50;
 /* GLOBAL VARIABLES */
 //////////////////////
 
-var scene, renderer,camera;
+var scene, renderer;
 var clock = new THREE.Clock();
 var cameras = {};
 var activeCamera;
 var trailer, robot;
 var keyCodes = {};
-
 var inAnimation = false;
 var outAnimation = false;
 var allowCollision = false;
-//var in_animation = false;
-var after_animation= false;
-var is_orthographic = true;
 
 var freedomDegrees = {
     v1: 0,
@@ -188,7 +184,7 @@ function createScene(){
 
     scene.add(new THREE.AxisHelper(10));
     
-    trailer = new Trailer(30, 0.5, 10);
+    trailer = new Trailer(0, 0.5, -30);
     robot = new Robot(0,0,0);
     scene.add(trailer);
     scene.add(robot);
@@ -247,7 +243,6 @@ function createTopCamera() {
 
 function createIsometricOrtographicCamera() {
     'use strict';
-    //OrthographicCamera( left : Number, right : Number, top : Number, bottom : Number, near : Number, far : Number )
     cameras.ortographic = new THREE.OrthographicCamera(window.innerWidth /  -40,
                                             window.innerWidth/40 ,
                                             window.innerHeight / 40,
@@ -401,7 +396,6 @@ class BodyGroup extends THREE.Object3D{
         this.position.add(new THREE.Vector3(x,y,z));
     }
 }
-
 
 class Robot extends THREE.Object3D{
     constructor(x,y,z){
@@ -723,20 +717,11 @@ class Robot extends THREE.Object3D{
     }
 
     createBoundingBox(x, y, z){
-        // var xMin = x - sizes.chest.x/2 - sizes.arm.x - sizes.pipe.x;
-        // var xMax = x + sizes.chest.x/2 + sizes.arm.x + sizes.pipe.x;
-
         var xMin = x - sizes.chest.x/2 - 2*sizes.pipe.x;
         var xMax = x + sizes.chest.x/2 + 2*sizes.pipe.x;
 
-        // var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - sizes.waist.y - sizes.thigh.y - sizes.leg.y;
-        // var yMax = y + sizes.chest.y/2 + sizes.head.y/2 + sizes.antenna.y    
-        
         var yMin = y - sizes.chest.y/2 - sizes.abdomen.y - 2*sizes.wheel.y
         var yMax = y + sizes.chest.y/2 + sizes.pipe.z/2;
-
-        // var zMin = z - sizes.chest.z/2 - sizes.arm.z;
-        // var zMax = z + sizes.chest.z/2
 
         var zMin = z - sizes.chest.z/2 - sizes.thigh.y - sizes.leg.y - sizes.foot.y;
         var zMax = z + sizes.chest.z/2;
@@ -804,7 +789,6 @@ class BoundingBox {
         this.z_min += units;
     }
 
-
     //methods
 
     intersect(other){
@@ -820,6 +804,7 @@ class BoundingBox {
 //////////////////////
 
 function checkCollision(){
+    'use strict'
     if (robot.boundingBox.intersect(trailer.boundingBox) && robot.isTruck() && !allowCollision){
         if(!inAnimation && !allowCollision){
             inAnimation = true;
@@ -831,6 +816,10 @@ function checkCollision(){
     }
     
 }
+
+///////////////////////
+/* HANDLE COLLISIONS */
+///////////////////////
 
 function startAnimation(deltaTime){
     'use strict'
@@ -863,6 +852,7 @@ function startAnimation(deltaTime){
 }
 
 function endAnimation(deltaTime){
+    'use strict'
     var pos = trailer.getWorldPosition();
     
     var delta_z = FINAL_POS_Z - pos.z;
@@ -881,97 +871,32 @@ function endAnimation(deltaTime){
 }
 
 
-// function checkCollisions(){
-//     'use strict';
-
-//     if(robot.boundingBox.intersect(trailer.boundingBox) ){
-//         if(!after_animation){
-//             return true;
-//         }else{
-//             return false;
-//         }
-//     }else if (after_animation){
-//         after_animation = false;
-//         return false;
-//     }else{
-//         return false;
-//     }
-// }
-
-///////////////////////
-/* HANDLE COLLISIONS */
-///////////////////////
-// function handleCollisions(){
-//     'use strict';
-//     if(in_animation){
-//         var pos = new THREE.Vector3();
-//         pos = trailer.getWorldPosition();
-//         activeCamera = cameras.side;
-//         var delta_x;
-//         var delta_z;
-//         delta_x = Math.abs(FINAL_POS_X- pos.x);
-//         delta_z = Math.abs(FINAL_POS_Z- pos.z);
-//         if(pos.x!= FINAL_POS_X || pos.z!= FINAL_POS_Z){
-//             if(pos.x> FINAL_POS_X){
-//                 if(delta_x < ANIMATION_STEP){
-//                     trailer.moveX(- delta_x);
-//                 }else {
-//                     trailer.moveX(- ANIMATION_STEP);
-//                 }
-//             }else if (pos.x< FINAL_POS_X){
-//                 if(delta_x < ANIMATION_STEP){
-//                     trailer.moveX( delta_x);
-//                 }else {
-//                     trailer.moveX( ANIMATION_STEP);
-//                 }
-//             }
-
-//             if(pos.z> FINAL_POS_Z){
-
-//                 if(delta_z < ANIMATION_STEP){
-//                     trailer.moveZ(- delta_z);
-//                 }else {
-//                     trailer.moveZ(- ANIMATION_STEP);
-//                 }
-//             }else if (pos.z< FINAL_POS_Z){
-//                 if(delta_z < ANIMATION_STEP){
-//                     trailer.moveZ( delta_z);
-//                 }else {
-//                     trailer.moveZ( ANIMATION_STEP);
-//                 }
-//             }
-//         }else{
-//             in_animation = false;
-//             after_animation = true;
-//         }
-//         /*
-//         if(pos.x != -1 ||pos.z!= -17){
-//             const smoothness = 0.05;
-//             const target_position= trailer.position.clone();
-//             target_position.x = -1;
-//             target_position.z = -17;
-//             trailer.position.lerp(target_position, smoothness);
-//         }else{
-//             in_animation = false;
-//             after_animation = true;
-//         }*/
-
-//     }
-                
-// }
-
 ////////////
 /* UPDATE */
 ////////////
-function update(){
-    'use strict';
 
+function update(deltaTime){
+    'use strict';
+    for (const key in keyCodes) {
+        if (keyCodes[key] && keyHandlers[key]) {
+            keyHandlers[key](deltaTime);
+        }
+    }
+    
+    if(inAnimation){
+        startAnimation(deltaTime);
+    }
+
+    if(outAnimation){
+        endAnimation(deltaTime);
+    }
 }
 
 
 /////////////
 /* DISPLAY */
 /////////////
+
 function render() {
     'use strict';
     renderer.render(scene, activeCamera);
@@ -980,6 +905,7 @@ function render() {
 ////////////////////////////////
 /* INITIALIZE ANIMATION CYCLE */
 ////////////////////////////////
+
 function init() {
     'use strict';
     renderer = new THREE.WebGLRenderer({
@@ -999,41 +925,14 @@ function init() {
 /////////////////////
 /* ANIMATION CYCLE */
 /////////////////////
+
 function animate() {
     'use strict';
 
     var deltaTime = clock.getDelta();
    
-    for (const key in keyCodes) {
-        if (keyCodes[key] && keyHandlers[key]) {
-            keyHandlers[key](deltaTime);
-        }
-    }
+    update(deltaTime);
     
-    if(inAnimation){
-        startAnimation(deltaTime);
-    }
-
-    if(outAnimation){
-        endAnimation(deltaTime);
-    }
-    
-
-    // console.log(inAnimation);
-    // if(checkCollisions()){
-    //     //handleCollisions();
-    //     in_animation = true;
-    // }
-
-    // handleCollisions()
-    //console.log(in_animation);
-    
-    //console.log(after_animation);
-
-    /*
-    var pos = new THREE.Vector3();
-    pos = trailer.getWorldPosition();
-    console.log(pos);*/
     render();
 
     requestAnimationFrame(animate);
@@ -1042,27 +941,20 @@ function animate() {
 ////////////////////////////
 /* RESIZE WINDOW CALLBACK */
 ////////////////////////////
+
 function onResize() { 
     'use strict';
     renderer.setSize(window.innerWidth, window.innerHeight);
 
     if (window.innerHeight > 0 && window.innerWidth > 0) {
-        if(is_orthographic){
-            if(window.innerHeight > window.innerWidth){
-                activeCamera.left = window.innerWidth / -40;
-                activeCamera.right = window.innerWidth / 40;
-                activeCamera.top = window.innerHeight / 40;
-                activeCamera.bottom = window.innerHeight / -40;
-            }else{
-                activeCamera.left = window.innerWidth / -40;
-                activeCamera.right = window.innerWidth / 40;
-                activeCamera.top = window.innerHeight / 40;
-                activeCamera.bottom = window.innerHeight / -40;
-            }
+        if(activeCamera != cameras.perspective){
+            activeCamera.left = window.innerWidth / -40;
+            activeCamera.right = window.innerWidth / 40;
+            activeCamera.top = window.innerHeight / 40;
+            activeCamera.bottom = window.innerHeight / -40;
         }else{
             activeCamera.aspect = window.innerWidth / window.innerHeight;
         }
-        
         activeCamera.updateProjectionMatrix();
     }
 
@@ -1071,6 +963,7 @@ function onResize() {
 ///////////////////////
 /* KEY DOWN CALLBACK */
 ///////////////////////
+
 function onKeyDown(e) {
     'use strict';
     if(!inAnimation){
@@ -1086,6 +979,7 @@ function onKeyDown(e) {
 ///////////////////////
 /* KEY UP CALLBACK */
 ///////////////////////
+
 function onKeyUp(e){
     'use strict';
     keyCodes[e.keyCode] = false;
