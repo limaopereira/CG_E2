@@ -808,6 +808,9 @@ function checkCollision(){
     if (robot.boundingBox.intersect(trailer.boundingBox) && robot.isTruck() && !allowCollision){
         if(!inAnimation && !allowCollision){
             inAnimation = true;
+            for (const key in keyCodes) {
+                    keyCodes[key] = false;
+            }
         }
         return true;
     }
