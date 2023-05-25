@@ -861,7 +861,6 @@ function startAnimation(deltaTime){
     else{
         inAnimation = false;
     }
-    trailer.move();
 }
 
 function endAnimation(deltaTime){
@@ -895,7 +894,6 @@ function update(deltaTime){
             keyHandlers[key](deltaTime);
         }
     }
-    trailer.move();
     
     if(inAnimation){
         startAnimation(deltaTime);
@@ -904,6 +902,9 @@ function update(deltaTime){
     if(outAnimation){
         endAnimation(deltaTime);
     }
+
+    trailer.move();
+
 }
 
 
