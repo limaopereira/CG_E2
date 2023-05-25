@@ -318,6 +318,7 @@ function createCylinder(size, material){
 class Trailer extends THREE.Object3D {
     constructor(x, y, z) {
         super();
+        this.moveVector = new THREE.Vector3(0,0,0);
         this.createTrailer(x, y, z);
         this.boundingBox = this.createBoundingBox(x,y,z);
     }
@@ -329,7 +330,7 @@ class Trailer extends THREE.Object3D {
             return false;
         }
         else{
-            trailer.position.x += x;
+            this.moveVector.add(new THREE.Vector3(x,0,0));
             return true;
         }
     }
@@ -341,9 +342,17 @@ class Trailer extends THREE.Object3D {
             return false;
         }
         else{
-            trailer.position.z += z;
+            this.moveVector.add(new THREE.Vector3(0,0,z));
             return true;
         }       
+    }
+
+    move(){
+        if(this.moveVector.x != 0 || this.moveVector.z != 0){
+            trailer.position.add(this.moveVector);
+            this.moveVector.set(0,0,0);
+        }
+        
     }
 
     createTrailer(x,y,z){
@@ -852,6 +861,7 @@ function startAnimation(deltaTime){
     else{
         inAnimation = false;
     }
+    trailer.move();
 }
 
 function endAnimation(deltaTime){
@@ -885,6 +895,7 @@ function update(deltaTime){
             keyHandlers[key](deltaTime);
         }
     }
+    trailer.move();
     
     if(inAnimation){
         startAnimation(deltaTime);
