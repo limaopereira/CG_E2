@@ -2,6 +2,10 @@
 /*   CONSTANTS     */
 /////////////////////
 
+// The constants defined here are mostly ASCII values for keyboard keys, 
+// and some constants related to the movement and rotation of a robot and trailer.
+
+
 const ARROW_LEFT = "37";
 const ARROW_UP = "38";
 const ARROW_RIGHT = "39";
@@ -156,6 +160,9 @@ const ANIMATION_STEP = 50;
 /* GLOBAL VARIABLES */
 //////////////////////
 
+// Global variables are defined here, including the scene, renderer, clock, cameras, 
+// active camera, trailer, robot, keyCodes, animation flags, and degrees of freedom.
+
 var scene, renderer;
 var clock = new THREE.Clock();
 var cameras = {};
@@ -177,6 +184,10 @@ var freedomDegrees = {
 /////////////////////
 /* CREATE SCENE(S) */
 /////////////////////
+
+// The createScene function initializes the scene and adds the trailer and robot.
+
+
 function createScene(){
     'use strict';
     scene = new THREE.Scene();
@@ -191,6 +202,9 @@ function createScene(){
 //////////////////////
 /* CREATE CAMERA(S) */
 //////////////////////
+
+// Several camera creation functions are defined here, including front, side, top, 
+// isometric orthographic and isometric perspective cameras.
 
 function createCameras() {
     'use strict';
@@ -271,10 +285,17 @@ function createIsometricPerspectiveCamera() {
 /* CREATE OBJECT3D(S) */
 ////////////////////////
 
+// Several classes and functions are defined here to create 3D objects. 
+// These include general mesh creation functions, a Trailer class, a Robot class, 
+// and a BodyGroup class. The Trailer and Robot classes includes methods for rotating and moving 
+// various parts of the trailer and robot.
+
 /* -------------------------------------------------- */
 /*                      GENERAL                       */
 /* -------------------------------------------------- */
 
+// The createMesh function creates a mesh with a given geometry and material. 
+// It sets the position and rotation of the mesh based on the provided coordinates.
 
 function createMesh(type, size, mat, x, y, z, r_x = 0, r_y = 0, r_z = 0){
     var mesh;
@@ -293,6 +314,8 @@ function createMesh(type, size, mat, x, y, z, r_x = 0, r_y = 0, r_z = 0){
     return mesh;
 }
 
+// The createCube function creates a cube mesh with a given size and material. 
+
 function createCube(size, material){
     'use strict'
     var {x, y, z} = size;
@@ -300,6 +323,8 @@ function createCube(size, material){
     var mesh = new THREE.Mesh(geometry, material);
     return mesh;
 }
+
+// The createCube function creates a cube mesh with a given size and material. 
 
 function createCylinder(size, material){
     'use strict'
@@ -313,6 +338,8 @@ function createCylinder(size, material){
 /*                      TRAILER                       */
 /* -------------------------------------------------- */
 
+// The Trailer class includes methods for moving the trailer and checking for collisions.
+
 class Trailer extends THREE.Object3D {
     constructor(x, y, z) {
         super();
@@ -320,6 +347,8 @@ class Trailer extends THREE.Object3D {
         this.createTrailer(x, y, z);
         this.boundingBox = this.createBoundingBox(x,y,z);
     }
+
+    // The moveX method changes the trailer's moveVector x-coordinate based on the provided speed and direction.
 
     moveX(x){
         trailer.boundingBox.x_add(x);
@@ -333,6 +362,8 @@ class Trailer extends THREE.Object3D {
         }
     }
 
+    // The moveZ method changes the trailer's  moveVector z-coordinate based on the provided speed and direction.
+
     moveZ(z){
         trailer.boundingBox.z_add(z);
         if(checkCollision()){
@@ -345,6 +376,8 @@ class Trailer extends THREE.Object3D {
         }       
     }
 
+    // The move method changes the trailer's position based on the provided speed and direction from the moveVector.
+
     move(){
         if(this.moveVector.x != 0 || this.moveVector.z != 0){
             trailer.position.add(this.moveVector);
@@ -352,6 +385,8 @@ class Trailer extends THREE.Object3D {
         }
         
     }
+
+    // The createTrailer method creates the trailer object, which includes a container, a set of wheels and a connector.
 
     createTrailer(x,y,z){
         var leftBackWheel = createMesh('cylinder', sizes.wheel, black, -3.25, -5, -8.5, 0, 0, 90);
@@ -370,6 +405,8 @@ class Trailer extends THREE.Object3D {
         this.position.set(x,y,z);
     }
 
+    // The createBoundingBox function creates a bounding box for trailer collision detection.
+
     createBoundingBox(x, y, z){
         var xMin = x - sizes.container.x/2;
         var xMax = x + sizes.container.x/2;
@@ -386,10 +423,12 @@ class Trailer extends THREE.Object3D {
 
 }
 
-
 /* -------------------------------------------------- */
 /*                      ROBOT                         */
 /* -------------------------------------------------- */
+
+// The BodyGroup class is a subclass of THREE.Object3D and includes methods for rotating 
+// and moving groups of body parts.
 
 class BodyGroup extends THREE.Object3D{
     
@@ -404,6 +443,10 @@ class BodyGroup extends THREE.Object3D{
     }
 }
 
+// The Robot class is also a subclass of THREE.Object3D and includes methods for rotating 
+// and moving the robot's feet, lower limbs, head, and upper limbs. It also includes methods 
+// for checking if the robot is in a "truck" configuration.
+
 class Robot extends THREE.Object3D{
     constructor(x,y,z){
         super();
@@ -415,6 +458,8 @@ class Robot extends THREE.Object3D{
         this.chest = this.createChest(x,y,z);
         this.boundingBox = this.createBoundingBox(x, y, z);
     }
+
+    // The rotateFeet method rotates the robot's feet around the x-axis based on the provided degrees.
 
     rotateFeet(degrees){
         if(0 > freedomDegrees.v1 + degrees){
@@ -431,6 +476,8 @@ class Robot extends THREE.Object3D{
         }
     }
 
+    // The rotateLowerLimbs method rotate the robot's lower limbs around the x-axis based on the provided degrees.
+
     rotateLowerLimbs(degrees){
         if(0 > freedomDegrees.v2 + degrees){
             this.lowerLimbsGroup.rotate(-freedomDegrees.v2);
@@ -446,6 +493,7 @@ class Robot extends THREE.Object3D{
         }
     }
 
+    // The rotateHead method rotate the robot's head around the x-axis based on the provided degrees.
 
     rotateHead(degrees){
         if (-180 > freedomDegrees.v3 + degrees){
@@ -461,6 +509,9 @@ class Robot extends THREE.Object3D{
             this.headGroup.rotate(degrees)
         }
     }
+
+    // The moveUpperLimbs method moves the robot's upper limbs along the x-axis based on the provided speed and direction. 
+    // The movement of the left and right arms are symmetrical, meaning they move in opposite directions but with the same speed.
 
     moveUpperLimbs(units){
         if (0 > freedomDegrees.delta1 + units){
@@ -480,12 +531,16 @@ class Robot extends THREE.Object3D{
         }
     }
 
+    // The isTruck method in the Robot class checks if the robot is in a "truck" configuration.
+
     isTruck(){
         return freedomDegrees.v1 == 180 && 
             freedomDegrees.v2 == 90 && 
             freedomDegrees.v3 == -180 &&
             freedomDegrees.delta1 == sizes.arm.x; 
     }
+
+    // The createHeadGroup function creates the antennas, eyes and adds these parts to the head group.
 
     createHeadGroup(){
         'use strict'
@@ -528,6 +583,8 @@ class Robot extends THREE.Object3D{
         return headGroup;
     }
 
+     // The createChest function creates the robot's chest and adds the head group, upper limbs group, and abdomen to it.
+
     createChest(x, y, z){
         var chest = createMesh('cube', sizes.chest, red, x, y, z);
         
@@ -538,6 +595,8 @@ class Robot extends THREE.Object3D{
         
         return chest;
     }
+
+    // The createUpperLimb function creates an upper limb (arm, forearm, and pipe) for a given side (left or right).
 
     createUpperLimb(side){
         var upperLimbGroup = new BodyGroup();
@@ -575,6 +634,8 @@ class Robot extends THREE.Object3D{
         return upperLimbGroup;
     }
 
+    // The createUpperLimbs function creates both upper limbs by calling the createUpperLimb function for both sides.
+
     createUpperLimbs(){
         var upperLimbsGroup = new BodyGroup();
         var leftUpperLimbGroup = this.createUpperLimb('left');
@@ -585,6 +646,8 @@ class Robot extends THREE.Object3D{
         
         return upperLimbsGroup;
     }
+
+    // The createAbdomen function creates the robot's abdomen and adds the waist to it.
 
     createAbdomen(){
         var abdomen = createMesh('cube', sizes.abdomen, red,
@@ -598,6 +661,9 @@ class Robot extends THREE.Object3D{
         return abdomen;
 
     }
+
+    // The createWaist function creates the robot's waist and adds the left wheel, right wheel, and lower limbs group to it.
+
     createWaist(){
         var waist = createMesh('cube', sizes.waist, grey, 
             0,
@@ -628,6 +694,8 @@ class Robot extends THREE.Object3D{
 
     }
 
+    // The createFoot function creates a foot for a given side (left or right).
+
     createFoot(side){
         var signal;
         switch (side){
@@ -645,6 +713,8 @@ class Robot extends THREE.Object3D{
         );
         return foot;
     }
+
+    // The createLowerLimb function creates a lower limb (thigh, leg, lower wheel, upper wheel) for a given side (left or right).
 
     createLowerLimb(side){
         var signal;
@@ -693,6 +763,8 @@ class Robot extends THREE.Object3D{
         return thigh;
     }
     
+    // The createLowerLimbs function creates both lower limbs and a feet group by calling the createLowerLimb and createFoot functions for both sides.
+
     createLowerLimbs(){
         var lowerLimbsGroup = new BodyGroup();
         var feetGroup = new BodyGroup();
@@ -723,6 +795,8 @@ class Robot extends THREE.Object3D{
 
     }
 
+    // The createBoundingBox function creates a bounding box for robot collision detection.
+
     createBoundingBox(x, y, z){
         var xMin = x - sizes.chest.x/2 - 2*sizes.pipe.x;
         var xMax = x + sizes.chest.x/2 + 2*sizes.pipe.x;
@@ -741,6 +815,8 @@ class Robot extends THREE.Object3D{
 ////////////////////////
 // BOUNDING BOX CLASS //
 ////////////////////////
+
+// The BoundingBox class is defined, which includes getters and setters for the minimum and maximum x, y, and z coordinates, and a method for checking if two bounding boxes intersect.
 
 class BoundingBox {
 
@@ -810,6 +886,8 @@ class BoundingBox {
 /* CHECK COLLISIONS */
 //////////////////////
 
+// The checkCollision function checks if the robot and trailer are colliding and if the robot is in a "truck" configuration.
+
 function checkCollision(){
     'use strict'
     if (robot.boundingBox.intersect(trailer.boundingBox) && robot.isTruck() && !allowCollision){
@@ -830,6 +908,8 @@ function checkCollision(){
 ///////////////////////
 /* HANDLE COLLISIONS */
 ///////////////////////
+
+// The startAnimation function handles the animation to connect the robot and the trailer. 
 
 function startAnimation(deltaTime){
     'use strict'
@@ -861,6 +941,8 @@ function startAnimation(deltaTime){
     }
 }
 
+// The endtAnimation function handles the animation to separate the robot and the trailer. 
+
 function endAnimation(deltaTime){
     'use strict'
     var pos = trailer.getWorldPosition();
@@ -884,6 +966,8 @@ function endAnimation(deltaTime){
 ////////////
 /* UPDATE */
 ////////////
+
+// The update function handles key presses and updates the animation.
 
 function update(deltaTime){
     'use strict';
@@ -910,6 +994,8 @@ function update(deltaTime){
 /* DISPLAY */
 /////////////
 
+// The render function renders the scene from the active camera's perspective.
+
 function render() {
     'use strict';
     renderer.render(scene, activeCamera);
@@ -918,6 +1004,8 @@ function render() {
 ////////////////////////////////
 /* INITIALIZE ANIMATION CYCLE */
 ////////////////////////////////
+
+// The init function initializes the renderer, creates the scene and cameras, and adds event listeners for key presses and window resizing.
 
 function init() {
     'use strict';
@@ -939,6 +1027,8 @@ function init() {
 /* ANIMATION CYCLE */
 /////////////////////
 
+// The animate function updates the scene and renders it in a loop.
+
 function animate() {
     'use strict';
 
@@ -954,6 +1044,10 @@ function animate() {
 ////////////////////////////
 /* RESIZE WINDOW CALLBACK */
 ////////////////////////////
+
+// The onResize function is an event handler that gets triggered when the window is resized. 
+// It adjusts the aspect ratio of the renderer and the active camera to match the new window size, 
+// ensuring that the scene is displayed correctly regardless of the window size.
 
 function onResize() { 
     'use strict';
@@ -977,6 +1071,11 @@ function onResize() {
 /* KEY DOWN CALLBACK */
 ///////////////////////
 
+// The onKeyDown function is an event handler that gets triggered when a key is pressed. 
+// If a valid key is pressed, it prevents the action from happening if an animation is currently playing. 
+// If the robot and trailer are connected and a key is pressed, it initiates the end animation, 
+// which separates the robot and the trailer.
+
 function onKeyDown(e) {
     'use strict';
     if(!inAnimation){
@@ -992,6 +1091,10 @@ function onKeyDown(e) {
 ///////////////////////
 /* KEY UP CALLBACK */
 ///////////////////////
+
+// The onKeyUp function is an event handler that gets triggered when a key is released. 
+// It sets the corresponding key in the keyCodes object to false, indicating that the key is no longer being pressed. 
+// This allows the robot or trailer to stop moving or rotating when the key is released.
 
 function onKeyUp(e){
     'use strict';
