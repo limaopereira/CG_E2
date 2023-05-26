@@ -181,8 +181,6 @@ function createScene(){
     'use strict';
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xcbd0b9);
-
-    scene.add(new THREE.AxisHelper(10));
     
     trailer = new Trailer(0, 0.5, -30);
     robot = new Robot(0,0,0);
